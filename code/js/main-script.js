@@ -4,6 +4,7 @@ import * as THREE from 'three';
 var renderer;
 
 var scene = new THREE.Scene();
+scene.add(new THREE.AxesHelper(10));
 var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
 
 camera.position.x = 50;
