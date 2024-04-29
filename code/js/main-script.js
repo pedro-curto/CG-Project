@@ -4,12 +4,21 @@ import * as THREE from 'three';
 var renderer;
 
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+var camera;
+var perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+var orthographicCamera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12, window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
 
-camera.position.x = 50;
-camera.position.y = 45;
-camera.position.z = -20;
-camera.lookAt(0,35,-5);
+camera = perspectiveCamera;
+
+perspectiveCamera.position.x = 50;
+perspectiveCamera.position.y = 45;
+perspectiveCamera.position.z = -20;
+perspectiveCamera.lookAt(0,35,-5);
+
+orthographicCamera.position.x = 50;
+orthographicCamera.position.y = 45;
+orthographicCamera.position.z = -20;
+orthographicCamera.lookAt(0,35,-5);
 
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
@@ -119,6 +128,17 @@ scene.add(g_top);
 function onKeyDown(e) {
 
     switch (e.keyCode) {
+        case 49: // 1
+        case 50: // 2
+        case 51: // 3
+        case 52: // 4
+            camera = orthographicCamera;
+            break;
+        case 53: // 5
+            camera = perspectiveCamera;
+            break;
+        case 54: // 6
+            break;
         case 87: // W
         case 119: // w
             g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
