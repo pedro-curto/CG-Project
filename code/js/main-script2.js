@@ -1,30 +1,49 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+import * as Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
+//////////////////////
 /* GLOBAL VARIABLES */
-var renderer;
-
-var scene = new THREE.Scene();
-scene.add(new THREE.AxesHelper(10));
-var camera;
-var perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-var orthographicCamera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12, window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-camera = perspectiveCamera;
-
-perspectiveCamera.position.x = 50;
-perspectiveCamera.position.y = 45;
-perspectiveCamera.position.z = -20;
-perspectiveCamera.lookAt(0,35,-5);
-
-orthographicCamera.position.x = 50;
-orthographicCamera.position.y = 45;
-orthographicCamera.position.z = -20;
-orthographicCamera.lookAt(0,35,-5);
-
+//////////////////////
+var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var wireframe = true;
 
+/////////////////////
+/* CREATE SCENE(S) */
+/////////////////////
+function createScene() {
+    'use strict';
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xDEEFF5);
+    scene.add(g_bot);
+    scene.add(g_top);
+
+}
+
+//////////////////////
+/* CREATE CAMERA(S) */
+//////////////////////
+function createCamera() {
+    'use strict';
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.x = 50;
+    camera.position.y = 45;
+    camera.position.z = -20;
+    camera.lookAt(0,35,-5);
+}
+
+/////////////////////
+/* CREATE LIGHT(S) */
+/////////////////////
+
+////////////////////////
+/* CREATE OBJECT3D(S) */
+////////////////////////
 base = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 5), new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: wireframe }));
 base.position.set(0, 1, 0);
 
@@ -121,24 +140,95 @@ g_bot.add(torre);
 
 g_bot.position.set(0, 0, 0);
 
-scene.add(g_bot);
-scene.add(g_top);
 
+//////////////////////
+/* CHECK COLLISIONS */
+//////////////////////
+function checkCollisions(){
+    'use strict';
 
+}
+
+///////////////////////
+/* HANDLE COLLISIONS */
+///////////////////////
+function handleCollisions(){
+    'use strict';
+
+}
+
+////////////
+/* UPDATE */
+////////////
+function update(){
+    'use strict';
+
+}
+
+/////////////
+/* DISPLAY */
+/////////////
+function render() {
+    'use strict';
+    renderer.render(scene, camera);
+}
+
+////////////////////////////////
+/* INITIALIZE ANIMATION CYCLE */
+////////////////////////////////
+function init() {
+    'use strict';
+    renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    createScene();
+    createCamera();
+
+    render();
+
+    document.addEventListener('keydown', onKeyDown, false);
+    window.addEventListener("resize", onResize);
+}
+
+/////////////////////
+/* ANIMATION CYCLE */
+/////////////////////
+function animate() {
+    'use strict';
+
+    // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
+    // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
+
+    // moveCamera(deltaX, deltaY);
+    
+    render();
+    
+    requestAnimationFrame(animate);
+}
+
+////////////////////////////
+/* RESIZE WINDOW CALLBACK */
+////////////////////////////
+export function onResize() {
+    'use strict';
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
+}
+
+///////////////////////
+/* KEY DOWN CALLBACK */
+///////////////////////
 function onKeyDown(e) {
 
     switch (e.keyCode) {
-        case 49: // 1
-        case 50: // 2
-        case 51: // 3
-        case 52: // 4
-            camera = orthographicCamera;
-            break;
-        case 53: // 5
-            camera = perspectiveCamera;
-            break;
-        case 54: // 6
-            break;
         case 87: // W
         case 119: // w
             g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
@@ -170,65 +260,12 @@ function onKeyDown(e) {
     }
 }
 
-function init() {
+///////////////////////
+/* KEY UP CALLBACK */
+///////////////////////
+function onKeyUp(e){
     'use strict';
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // createScene();
-    // createCamera();
-
-    render();
-
-    document.addEventListener('keydown', onKeyDown, false);
-    window.addEventListener("resize", onResize);
-}
-
-export function onResize() {
-    'use strict';
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-    }
-}
-
-export function render() {
-    'use strict';
-    renderer.render(scene, camera);
-}
-
-function animate() {
-    'use strict';
-
-    // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
-    // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
-
-    // moveCamera(deltaX, deltaY);
-    
-    render();
-    
-    requestAnimationFrame(animate);
 }
 
 init();
 animate();
-
-
-
-
-
-/* CHECK COLLISIONS */
-/* HANDLE COLLISIONS */
-/* UPDATE */
-/* DISPLAY */
-/* INITIALIZE ANIMATION CYCLE */
-/* ANIMATION CYCLE */
-/* RESIZE WINDOW CALLBACK */
-/* KEY DOWN CALLBACK */
-/* KEY UP CALLBACK */
