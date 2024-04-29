@@ -121,7 +121,7 @@ function onKeyDown(e) {
     switch (e.keyCode) {
         case 87: // W
         case 119: // w
-            g_carrinho.position.z -= 1;
+            g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
             break;
         case 83: // S
         case 115: // s
