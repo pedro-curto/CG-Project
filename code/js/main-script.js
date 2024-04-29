@@ -125,7 +125,7 @@ function onKeyDown(e) {
             break;
         case 83: // S
         case 115: // s
-            g_carrinho.position.z += 1;
+            g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
             break;
         case 37: // Left
             g_top.rotation.y += Math.PI / 24;
@@ -134,11 +134,15 @@ function onKeyDown(e) {
             g_top.rotation.y -= Math.PI / 24;
             break;
         case 38: // Up
+            const len = cabo.geometry.parameters.height;
+            if (len - 1 < 3) break;
             cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - 1);
             cabo.position.y += 0.5;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 40: // Down
+            const len2 = cabo.geometry.parameters.height;
+            if (len2 + 1 > 50) break;
             cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 1);
             cabo.position.y -= 0.5;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
