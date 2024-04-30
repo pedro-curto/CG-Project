@@ -304,6 +304,14 @@ function onKeyDown(e) {
             cabo.position.y -= 0.5;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
+        case 86: // V, display/hide wireframe
+            console.log("V pressed")
+            scene.traverse(function (node) {
+                if (node instanceof THREE.Mesh) {
+                    node.material.wireframe = !node.material.wireframe;
+                }
+            });
+            break;
     }
 }
 
