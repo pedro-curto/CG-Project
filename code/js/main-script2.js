@@ -47,9 +47,9 @@ function createCamera(cameraType) {
         case 'top': // 3   
             console.log('Top Camera');
             // aligned with the y-axis
-            //camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-            //window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            //setCamera(0, 50, 0, 0, 0, 0);
+            camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
+            window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+            setCamera(0, 70, 0, 0, -1, 0); // Positioned above the scene looking down
             break;
         case 'ortographic': // 4
             console.log('Orthographic Camera');
@@ -64,7 +64,9 @@ function createCamera(cameraType) {
             break;
         case 'mobile': // 6
             console.log('Mobile Camera');
-            // aligned with the 
+            // aligned with the hook of the crane (POV of the hook)
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+            setCamera(0, 0, 0, 0, 0, 0);
             break;
 
     }
