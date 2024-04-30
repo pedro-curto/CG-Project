@@ -49,7 +49,7 @@ function createCamera(cameraType) {
             // aligned with the y-axis
             camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
             window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            setCamera(0, 70, 0, 0, -1, 0); // Positioned above the scene looking down
+            setCamera(0, 70, 0, -1, 0, 0); // Positioned above the scene looking down
             break;
         case 'ortographic': // 4
             console.log('Orthographic Camera');
