@@ -11,6 +11,7 @@ var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
+var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
 
 /////////////////////
@@ -138,6 +139,17 @@ pinca4.rotateX(-Math.PI/2);
 pinca4.rotateZ(-Math.PI/2);
 pinca4.position.set(0, -1, 0);
 
+pivot_pinca1 = new THREE.Object3D();
+pivot_pinca1.add(pinca1);
+
+pivot_pinca2 = new THREE.Object3D();
+pivot_pinca2.add(pinca2);
+
+pivot_pinca3 = new THREE.Object3D();
+pivot_pinca3.add(pinca3);
+
+pivot_pinca4 = new THREE.Object3D();
+pivot_pinca4.add(pinca4);
 
 g_peso = new THREE.Object3D();
 g_peso.add(contra_peso1);
@@ -148,10 +160,10 @@ g_peso.position.set(0, 0, 9.5);
 
 g_garra = new THREE.Object3D();
 g_garra.add(garra);
-g_garra.add(pinca1);
-g_garra.add(pinca2);
-g_garra.add(pinca3);
-g_garra.add(pinca4);
+g_garra.add(pivot_pinca1);
+g_garra.add(pivot_pinca2);
+g_garra.add(pivot_pinca3);
+g_garra.add(pivot_pinca4);
 g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
 
 g_carrinho = new THREE.Object3D();
@@ -303,6 +315,22 @@ function onKeyDown(e) {
             cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 1);
             cabo.position.y -= 0.5;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+            break;
+        case 82: // R (close claw)
+            if (pivot_pinca1.rotation.z > -Math.PI/7) {
+                pivot_pinca1.rotateZ(-Math.PI/24);
+                pivot_pinca2.rotateZ(Math.PI/24);
+                pivot_pinca3.rotateX(Math.PI/24);
+                pivot_pinca4.rotateX(-Math.PI/24);
+            }
+            break;
+        case 70: // F (open claw)
+            if (pivot_pinca1.rotation.z < Math.PI/6) {
+                pivot_pinca1.rotateZ(Math.PI/24);
+                pivot_pinca2.rotateZ(-Math.PI/24);
+                pivot_pinca3.rotateX(-Math.PI/24);
+                pivot_pinca4.rotateX(Math.PI/24);
+            }
             break;
         case 86: // V, display/hide wireframe
             console.log("V pressed")
