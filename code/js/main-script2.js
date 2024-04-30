@@ -11,8 +11,12 @@ var renderer, scene, camera, mobileCamera, currentCamera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
+var items = [];
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
+var clawRotationAngle = 0; // Stores current rotation angle
+const clawRotationIncrement = Math.PI / 12; // Adjust for desired rotation speed
+
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
 
@@ -88,6 +92,7 @@ function switchCamera(cameraType) {
             camera = camera5;
             break;
         case 'mobile': // 6
+        case 54: // 6 (câmara móvel com projecção perspectiva)
             console.log('Mobile Camera');
             camera = camera6;
             break;
