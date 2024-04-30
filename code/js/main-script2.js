@@ -104,7 +104,7 @@ function switchCamera(cameraType) {
 ////////////////////////
 
 function createMesh(geometry, color) {
-    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: false });
+    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, material);
     items.push(mesh);
     return mesh;
