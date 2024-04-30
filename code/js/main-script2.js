@@ -93,6 +93,7 @@ function switchCamera(cameraType) {
             break;
         case 'mobile': // 6
         case 54: // 6 (câmara móvel com projecção perspectiva)
+        case 54: // 6 (câmara móvel com projecção perspectiva)
             console.log('Mobile Camera');
             camera = camera6;
             break;
