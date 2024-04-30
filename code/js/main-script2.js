@@ -28,6 +28,8 @@ function createScene() {
     createGroundPlane();
     scene.add(g_bot);
     scene.add(g_top);
+    //createContainer();
+    createCargos();
 }
 
 //////////////////////
@@ -86,6 +88,7 @@ function switchCamera(cameraType) {
             camera = camera5;
             break;
         case 'mobile': // 6
+        case 54: // 6 (câmara móvel com projecção perspectiva)
             console.log('Mobile Camera');
             camera = camera6;
             break;
@@ -99,61 +102,112 @@ function switchCamera(cameraType) {
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-base = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 5), new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: wireframe }));
+
+function createMesh(geometry, color) {
+    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: false });
+    var mesh = new THREE.Mesh(geometry, material);
+    items.push(mesh);
+    return mesh;
+}
+
+
+/*function createContainer() {
+    const containerWidth = 5;
+    const containerHeight = 5;
+    const containerDepth = 5;
+    const containerColour = 0xffffff;
+    const containerBase = createMesh(new THREE.BoxGeometry(containerWidth, 1, containerDepth), containerColour, new THREE.Vector3(0, 0.5, 0));
+    containerBase.material.side = THREE.DoubleSide;
+
+    const containerWallLeft = createMesh(new THREE.BoxGeometry(1, containerHeight, containerDepth), containerColour, new THREE.Vector3(-containerWidth / 2, containerHeight / 2, 0));
+    containerWallLeft.material.side = THREE.DoubleSide;
+
+    const containerWallRight = createMesh(new THREE.BoxGeometry(1, containerHeight, containerDepth), containerColour, new THREE.Vector3(containerWidth / 2, containerHeight / 2, 0));
+    containerWallRight.material.side = THREE.DoubleSide;
+
+    const containerWallBack = createMesh(new THREE.BoxGeometry(containerWidth, containerHeight, 1), containerColour, new THREE.Vector3(0, containerHeight / 2, containerDepth / 2));
+    containerWallBack.material.side = THREE.DoubleSide;
+
+    const container = new THREE.Object3D();
+    container.add(containerBase);
+    container.add(containerWallLeft);
+    container.add(containerWallRight);
+    container.add(containerWallBack);
+    container.position.set(-5, 0, -5);
+    scene.add(container);
+
+}*/
+
+
+function createCargos() {
+    let cargos = new THREE.Object3D();
+    let cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
+    let cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
+    let cargo3 = createMesh(new THREE.BoxGeometry(3, 4, 1), 0x0ffff0);
+    // randomly scatters the cargos
+    cargo1.position.set(-5, 0, -25);
+    cargo2.position.set(20, 0, 20);
+    cargo3.position.set(15, 0, -15);
+    cargos.add(cargo1);
+    cargos.add(cargo2);
+    cargos.add(cargo3);
+    scene.add(cargo1);
+    scene.add(cargo2);
+    scene.add(cargo3);
+    scene.add(cargos);
+}
+
+base = createMesh(new THREE.BoxGeometry(5, 2, 5), 0x00ffff);
 base.position.set(0, 1, 0);
 
-torre = new THREE.Mesh(new THREE.BoxGeometry(2, 48, 2), new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: wireframe }));
+torre = createMesh(new THREE.BoxGeometry(2, 48, 2), 0xff00ff);
 torre.position.set(0, 24 + 2, 0);
 
-cabine = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshBasicMaterial({ color: 0x0ffff0, wireframe: wireframe }));
+cabine = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
 cabine.position.set(0, 1, 0);
 
-porta_lanca = new THREE.Mesh(new THREE.BoxGeometry(2,6,2), new THREE.MeshBasicMaterial({ color: 0xf0f00f, wireframe: wireframe }));
+porta_lanca = createMesh(new THREE.BoxGeometry(2,6,2), 0xf0f00f);
 porta_lanca.position.set(0, 3 + 2, 0);
 
-contra_lanca = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 8), new THREE.MeshBasicMaterial({ color: 0xff000f, wireframe: wireframe }));
+contra_lanca = createMesh(new THREE.BoxGeometry(2, 2, 8), 0xff000f);
 contra_lanca.position.set(0, 2 + 1, 4 + 1);
 
-lanca = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 30), new THREE.MeshBasicMaterial({ color: 0xff000f, wireframe: wireframe }));
+lanca = createMesh(new THREE.BoxGeometry(2, 2, 30), 0xff000f);
 lanca.position.set(0, 1 + 2, -15 - 1);
 
-contra_peso1 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: wireframe }));
+contra_peso1 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x555555);
 contra_peso1.position.set(0, 2, 0)
 
-contra_peso2 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe }));
+contra_peso2 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x666666);
 contra_peso2.position.set(0, 2, 1)
 
-contra_peso3 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x777777, wireframe: wireframe }));
+contra_peso3 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x777777);
 contra_peso3.position.set(0, 2, 2)
 
-contra_peso4 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: wireframe }));
+contra_peso4 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x888888);
 contra_peso4.position.set(0, 2, 3)
 
-carrinho = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1), new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: wireframe }));
+carrinho = createMesh(new THREE.BoxGeometry(1, 0.5, 1), 0x0000ff);
 
-cabo = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: false }));
+cabo = createMesh(new THREE.CylinderGeometry(0.1, 0.1, 10), 0x00ff00);
 cabo.position.set(0, -5, 0);
 
-garra = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), new THREE.MeshBasicMaterial({ color: 0xff00f0, wireframe: false }));
+garra = createMesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), 0xff00f0);
 
-pinca1 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3),
-         new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+pinca1 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000);
 pinca1.rotateX(-Math.PI/2);
 pinca1.position.set(0, -1, 0);
 
-pinca2 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+pinca2 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000);
 pinca2.rotateX(-Math.PI/2);
 pinca2.position.set(0, -1, 0);
 
-pinca3 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+pinca3 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000);
 pinca3.rotateX(-Math.PI/2);
 pinca3.rotateZ(-Math.PI/2);
 pinca3.position.set(0, -1, 0);
 
-pinca4 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+pinca4 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000);
 pinca4.rotateX(-Math.PI/2);
 pinca4.rotateZ(-Math.PI/2);
 pinca4.position.set(0, -1, 0);
