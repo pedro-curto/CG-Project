@@ -7,7 +7,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var renderer, scene, camera;
+var renderer, scene, camera, mobileCamera, currentCamera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
@@ -23,13 +23,13 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xd3d3d3);
-    createCargos();
-    createContainer();
-    createGroundPlane();
+    createBottomSection();
+    createTopSection();
     scene.add(g_bot);
     scene.add(g_top);
-    //createContainer();
+    createContainer();
     createCargos();
+    //createGroundPlane();
 }
 
 //////////////////////
@@ -64,18 +64,18 @@ function switchCamera(cameraType) {
     'use strict';
     switch(cameraType) {
         case 'frontal': // 1
-            console.log('Frontal Camera');
+            //console.log('Frontal Camera');
             // aligned with the z-axis
             console.log(camera1.isCamera);
             camera = camera1;
             break;
         case 'lateral': // 2
-            console.log('Lateral Camera');
+            //console.log('Lateral Camera');
             // aligned with the x-axis
             camera = camera2;
             break;
         case 'top': // 3   
-            console.log('Top Camera');
+            //console.log('Top Camera');
             // aligned with the y-axis
             camera = camera3;
             break;
@@ -111,32 +111,152 @@ function createMesh(geometry, color) {
 }
 
 
-/*function createContainer() {
-    const containerWidth = 5;
-    const containerHeight = 5;
-    const containerDepth = 5;
-    const containerColour = 0xffffff;
-    const containerBase = createMesh(new THREE.BoxGeometry(containerWidth, 1, containerDepth), containerColour, new THREE.Vector3(0, 0.5, 0));
-    containerBase.material.side = THREE.DoubleSide;
+function createBoxObject(x, y, z, width, height, depth, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.BoxGeometry(width, height, depth), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
 
-    const containerWallLeft = createMesh(new THREE.BoxGeometry(1, containerHeight, containerDepth), containerColour, new THREE.Vector3(-containerWidth / 2, containerHeight / 2, 0));
-    containerWallLeft.material.side = THREE.DoubleSide;
 
-    const containerWallRight = createMesh(new THREE.BoxGeometry(1, containerHeight, containerDepth), containerColour, new THREE.Vector3(containerWidth / 2, containerHeight / 2, 0));
-    containerWallRight.material.side = THREE.DoubleSide;
+function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
 
-    const containerWallBack = createMesh(new THREE.BoxGeometry(containerWidth, containerHeight, 1), containerColour, new THREE.Vector3(0, containerHeight / 2, containerDepth / 2));
-    containerWallBack.material.side = THREE.DoubleSide;
 
-    const container = new THREE.Object3D();
-    container.add(containerBase);
-    container.add(containerWallLeft);
-    container.add(containerWallRight);
-    container.add(containerWallBack);
-    container.position.set(-5, 0, -5);
+function createClawFinger(geometry, color, rotationX, rotationZ) {
+    var pinca = createMesh(geometry, color);
+    pinca.rotateX(rotationX);
+    pinca.rotateZ(rotationZ);
+    pinca.position.set(0, -1, 0);
+    return pinca;
+}
+
+
+function createClaw() {
+    cabo = createCylinderObject(0, -5, 0, 0.1, 0.1, 10, 0x00ff00);
+    garra = createMesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), 0xff00f0);
+    
+    pinca1 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000, -Math.PI/2, 0);
+    pinca2 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000, -Math.PI/2, 0);
+    pinca3 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000, -Math.PI/2, -Math.PI/2);
+    pinca4 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000, -Math.PI/2, -Math.PI/2);
+    
+    pivot_pinca1 = new THREE.Object3D();
+    pivot_pinca1.add(pinca1);
+    
+    pivot_pinca2 = new THREE.Object3D();
+    pivot_pinca2.add(pinca2);
+
+    pivot_pinca3 = new THREE.Object3D();
+    pivot_pinca3.add(pinca3);
+    
+    pivot_pinca4 = new THREE.Object3D();
+    pivot_pinca4.add(pinca4);
+    g_garra = new THREE.Object3D();
+    g_garra.add(garra);
+    g_garra.add(pivot_pinca1);
+    g_garra.add(pivot_pinca2);
+    g_garra.add(pivot_pinca3);
+    g_garra.add(pivot_pinca4);
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+}
+
+
+function createCart() {
+    'use strict';
+    carrinho = createBoxObject(0, 0, 0, 1, 0.5, 1, 0x0000ff);
+    g_carrinho = new THREE.Object3D();
+    g_carrinho.add(carrinho);
+    g_carrinho.add(cabo);
+    g_carrinho.add(g_garra);
+    g_carrinho.position.set(0, 2, -15);
+}
+
+
+function createCounterWeight() {
+    'use strict';
+    contra_peso1 = createBoxObject(0, 2, 0, 2, 4, 1, 0x555555);
+    contra_peso2 = createBoxObject(0, 2, 1, 2, 4, 1, 0x666666);
+    contra_peso3 = createBoxObject(0, 2, 2, 2, 4, 1, 0x777777);
+    contra_peso4 = createBoxObject(0, 2, 3, 2, 4, 1, 0x888888);
+    g_peso = new THREE.Object3D();
+    g_peso.add(contra_peso1);
+    g_peso.add(contra_peso2);
+    g_peso.add(contra_peso3);
+    g_peso.add(contra_peso4);
+    g_peso.position.set(0, 0, 9.5);
+}
+
+
+function createBottomSection() {
+    'use strict';
+    base = createBoxObject(0, 1, 0, 5, 2, 5, 0x00ffff);
+    torre = createBoxObject(0, 24 + 2, 0, 2, 48, 2, 0xff00ff);
+    g_bot = new THREE.Object3D();
+    g_bot.add(base);
+    g_bot.add(torre);
+    g_bot.position.set(0, 0, 0);
+}
+
+
+function createTopSection() {
+    'use strict';
+    createCounterWeight();
+    createClaw();
+    createCart();
+    cabine = createBoxObject(0, 1, 0, 2, 2, 2, 0x0ffff0);
+    lanca = createBoxObject(0, 1 + 2, -15 - 1, 2, 2, 30, 0xff000f);
+    contra_lanca = createBoxObject(0, 2 + 1, 4 + 1, 2, 2, 8, 0xff000f);
+    porta_lanca = createBoxObject(0, 3 + 2, 0, 2, 6, 2, 0xf0f00f);
+    g_top = new THREE.Object3D();
+    g_top.add(cabine);
+    g_top.add(lanca);
+    g_top.add(contra_lanca);
+    g_top.add(porta_lanca);
+    g_top.add(g_peso);
+    g_top.add(g_carrinho);
+    g_top.position.set(0, 50, 0);
+}
+
+
+function addContainerBase(obj, x, y, z, width, depth) {
+    'use strict';
+    var geometry = new THREE.BoxGeometry(width, 1, depth);
+    var mesh = createMesh(geometry, 0x000000);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+
+function addContainerWall(obj, x, y, z, width, height, depth) {
+    'use strict';
+    var geometry = new THREE.BoxGeometry(width, height, depth);
+    var mesh = createMesh(geometry, 0x000000);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+
+function createContainer() {
+    'use strict';
+    var container = new THREE.Object3D();
+    const containerWidth = 25;
+    const containerHeight = 10;
+    const containerDepth = 15;
+    addContainerBase(container, 0, -containerHeight / 2, 0, containerWidth, containerDepth);
+    // frontal walls
+    addContainerWall(container, containerWidth/2, 0, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, -containerWidth/2, 0, 0, 1, containerHeight, containerDepth);
+    // lateral walls
+    addContainerWall(container, 0, 0, -containerDepth / 2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, 0, containerDepth / 2, containerWidth, containerHeight, 1);
+    container.position.set(-15, 0, -15);
     scene.add(container);
-
-}*/
+}
 
 
 function createCargos() {
@@ -157,120 +277,21 @@ function createCargos() {
     scene.add(cargos);
 }
 
-base = createMesh(new THREE.BoxGeometry(5, 2, 5), 0x00ffff);
-base.position.set(0, 1, 0);
 
-torre = createMesh(new THREE.BoxGeometry(2, 48, 2), 0xff00ff);
-torre.position.set(0, 24 + 2, 0);
-
-cabine = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
-cabine.position.set(0, 1, 0);
-
-porta_lanca = createMesh(new THREE.BoxGeometry(2,6,2), 0xf0f00f);
-porta_lanca.position.set(0, 3 + 2, 0);
-
-contra_lanca = createMesh(new THREE.BoxGeometry(2, 2, 8), 0xff000f);
-contra_lanca.position.set(0, 2 + 1, 4 + 1);
-
-lanca = createMesh(new THREE.BoxGeometry(2, 2, 30), 0xff000f);
-lanca.position.set(0, 1 + 2, -15 - 1);
-
-contra_peso1 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x555555);
-contra_peso1.position.set(0, 2, 0)
-
-contra_peso2 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x666666);
-contra_peso2.position.set(0, 2, 1)
-
-contra_peso3 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x777777);
-contra_peso3.position.set(0, 2, 2)
-
-contra_peso4 = createMesh(new THREE.BoxGeometry(2, 4, 1), 0x888888);
-contra_peso4.position.set(0, 2, 3)
-
-carrinho = createMesh(new THREE.BoxGeometry(1, 0.5, 1), 0x0000ff);
-
-cabo = createMesh(new THREE.CylinderGeometry(0.1, 0.1, 10), 0x00ff00);
-cabo.position.set(0, -5, 0);
-
-garra = createMesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), 0xff00f0);
-
-pinca1 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000);
-pinca1.rotateX(-Math.PI/2);
-pinca1.position.set(0, -1, 0);
-
-pinca2 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000);
-pinca2.rotateX(-Math.PI/2);
-pinca2.position.set(0, -1, 0);
-
-pinca3 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000);
-pinca3.rotateX(-Math.PI/2);
-pinca3.rotateZ(-Math.PI/2);
-pinca3.position.set(0, -1, 0);
-
-pinca4 = createMesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000);
-pinca4.rotateX(-Math.PI/2);
-pinca4.rotateZ(-Math.PI/2);
-pinca4.position.set(0, -1, 0);
-
-pivot_pinca1 = new THREE.Object3D();
-pivot_pinca1.add(pinca1);
-
-pivot_pinca2 = new THREE.Object3D();
-pivot_pinca2.add(pinca2);
-
-pivot_pinca3 = new THREE.Object3D();
-pivot_pinca3.add(pinca3);
-
-pivot_pinca4 = new THREE.Object3D();
-pivot_pinca4.add(pinca4);
-
-g_peso = new THREE.Object3D();
-g_peso.add(contra_peso1);
-g_peso.add(contra_peso2);
-g_peso.add(contra_peso3);
-g_peso.add(contra_peso4);
-g_peso.position.set(0, 0, 9.5);
-
-g_garra = new THREE.Object3D();
-g_garra.add(garra);
-g_garra.add(pivot_pinca1);
-g_garra.add(pivot_pinca2);
-g_garra.add(pivot_pinca3);
-g_garra.add(pivot_pinca4);
-g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
-
-g_carrinho = new THREE.Object3D();
-g_carrinho.add(carrinho);
-g_carrinho.add(cabo);
-g_carrinho.add(g_garra);
-g_carrinho.position.set(0, 2, -15);
-
-tirante_frente = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 28, 50, 2, false, 0, 2*Math.PI),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-tirante_frente.rotateX(0.455*Math.PI);
-tirante_frente.position.set(0, 5.9, -14.5);
-
-tirante_tras = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 12, 50, 2, false, 0, 2*Math.PI),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-tirante_tras.rotateX(-0.397*Math.PI);
-tirante_tras.position.set(0, 5.9, 5.5);
-
-g_top = new THREE.Object3D();
-g_top.add(cabine);
-g_top.add(lanca);
-g_top.add(contra_lanca);
-g_top.add(porta_lanca);
-g_top.add(g_peso);
-g_top.add(g_carrinho);
-g_top.add(tirante_frente);
-g_top.add(tirante_tras);
-g_top.position.set(0, 50, 0);
-
-g_bot = new THREE.Object3D();
-g_bot.add(base);
-g_bot.add(torre);
-
-g_bot.position.set(0, 0, 0);
+function createGroundPlane() {
+    const planeWidth = 10000;
+    const planeHeight = 10000;
+    
+    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x9fff65, side: THREE.DoubleSide });
+    
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    
+    plane.position.set(0, 0, 0); 
+    plane.rotation.x = -Math.PI / 2;
+    scene.add(plane);
+}
 
 function createMesh(geometry, color) {
     var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
@@ -423,7 +444,7 @@ function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-
+    createMobileCamera();
     createScene();
     createCamera();
 
@@ -441,9 +462,6 @@ function animate() {
 
     // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
     // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
-
-    // moveCamera(deltaX, deltaY);
-    
     render();
     
     requestAnimationFrame(animate);
@@ -483,11 +501,13 @@ function onKeyDown(e) {
             switchCamera('mobile'); break;
         case 87: // W
         case 119: // w
-            g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
+            g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null;
+            updateCameraPosition();
             break;
         case 83: // S
         case 115: // s
             g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
+            updateCameraPosition();
             break;
         case 37: // Left
             g_top.rotation.y += Math.PI / 180;
