@@ -13,6 +13,7 @@ var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
+var camera1, camera2, camera3, camera4, camera5, camera6;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -28,51 +29,64 @@ function createScene() {
 //////////////////////
 /* CREATE CAMERA(S) */
 //////////////////////
-function createCamera(cameraType) {
+function createCamera() {
+    'use strict';
+    camera1 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
+        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+    camera2 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
+        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+    camera3 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
+        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+    camera4 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
+        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+    camera5 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+
+    setCamera(camera1, 0, 0, 50, 0, 0, 0);
+    setCamera(camera2, 50, 0, 0, 0, 0, 0);
+    setCamera(camera3, 0, 70, 0, -1, 0, 0); // Positioned above the scene looking down
+    setCamera(camera4, 50, 45, -20, 0, 35, -5);
+    setCamera(camera5, 50, 45, -20, 0, 35, -5);
+    camera6.rotateX(-Math.PI/2);
+    g_garra.add(camera6);
+
+    camera = camera5; // set default camera
+}
+
+function switchCamera(cameraType) {
     'use strict';
     switch(cameraType) {
         case 'frontal': // 1
             console.log('Frontal Camera');
             // aligned with the z-axis
-            camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-            window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            setCamera(0, 0, 50, 0, 0, 0);
+            console.log(camera1.isCamera);
+            camera = camera1;
             break;
         case 'lateral': // 2
             console.log('Lateral Camera');
             // aligned with the x-axis
-            camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-            window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            setCamera(50, 0, 0, 0, 0, 0);
+            camera = camera2;
             break;
         case 'top': // 3   
             console.log('Top Camera');
             // aligned with the y-axis
-            camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-            window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            setCamera(0, 70, 0, -1, 0, 0); // Positioned above the scene looking down
+            camera = camera3;
             break;
         case 'ortographic': // 4
             console.log('Orthographic Camera');
-            camera = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12, 
-            window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-            setCamera(50, 45, -20, 0, 35, -5);
+            camera = camera4;
             break;
         case 'perspective': // 5
             console.log('Perspective Camera');
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-            setCamera(50, 45, -20, 0, 35, -5);
+            camera = camera5;
             break;
         case 'mobile': // 6
             console.log('Mobile Camera');
-            // aligned with the hook of the crane (POV of the hook)
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-            setCamera(0, 0, 0, 0, 0, 0);
+            camera = camera6;
             break;
 
     }
 }
-
 /////////////////////
 /* CREATE LIGHT(S) */
 /////////////////////
@@ -232,7 +246,7 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera('perspective');
+    createCamera();
 
     render();
 
@@ -277,17 +291,17 @@ function onKeyDown(e) {
 
     switch (e.keyCode) {
         case 49: // 1
-            createCamera('frontal'); break;
+            switchCamera('frontal'); break;
         case 50: // 2
-            createCamera('lateral'); break;
+            switchCamera('lateral'); break;
         case 51: // 3
-            createCamera('top'); break;
+            switchCamera('top'); break;
         case 52: // 4
-            createCamera('ortographic'); break;
+            switchCamera('ortographic'); break;
         case 53: // 5
-            createCamera('perspective'); break;
+            switchCamera('perspective'); break;
         case 54: // 6
-            createCamera('mobile'); break;
+            switchCamera('mobile'); break;
         case 87: // W
         case 119: // w
             g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
@@ -353,7 +367,7 @@ function onKeyUp(e){
 init();
 animate();
 
-function setCamera(x, y, z, xLook, yLook, zLook) {
+function setCamera(camera, x, y, z, xLook, yLook, zLook) {
     camera.position.x = x;
     camera.position.y = y;
     camera.position.z = z;
