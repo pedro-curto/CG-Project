@@ -7,7 +7,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var renderer, scene, camera, mobileCamera, currentCamera;
+var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
@@ -456,7 +456,6 @@ function onKeyDown(e) {
         case 83: // S
         case 115: // s
             g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
-            updateCameraPosition();
             break;
         case 37: // Left
             g_top.rotation.y += Math.PI / 180;
