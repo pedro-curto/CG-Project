@@ -7,7 +7,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var renderer, scene, camera;
+var renderer, scene, camera, mobileCamera, currentCamera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
@@ -131,6 +131,22 @@ function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
 }
 
 
+function createBoxObject(x, y, z, width, height, depth, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.BoxGeometry(width, height, depth), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
+
+
+function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
+
+
 function createClawFinger(geometry, color, rotationX, rotationZ) {
     var pinca = createMesh(geometry, color);
     pinca.rotateX(rotationX);
@@ -216,6 +232,13 @@ function createTopSection() {
     lanca = createBoxObject(0, 1 + 2, -15 - 1, 2, 2, 30, 0xff000f);
     contra_lanca = createBoxObject(0, 2 + 1, 4 + 1, 2, 2, 8, 0xff000f);
     porta_lanca = createBoxObject(0, 3 + 2, 0, 2, 6, 2, 0xf0f00f);
+
+    tirante_frente = createCylinderObject(0, 5.9, -14.5, 0.1, 0.1, 28, 0xff0000);
+    tirante_frente.rotateX(0.455*Math.PI);
+
+    tirante_tras = createCylinderObject(0, 5.9, 5.5, 0.1, 0.1, 12, 0xff0000);
+    tirante_tras.rotateX(-0.397*Math.PI);
+
     g_top = new THREE.Object3D();
     g_top.add(cabine);
     g_top.add(lanca);
@@ -223,6 +246,8 @@ function createTopSection() {
     g_top.add(porta_lanca);
     g_top.add(g_peso);
     g_top.add(g_carrinho);
+    g_top.add(tirante_frente);
+    g_top.add(tirante_tras);
     g_top.position.set(0, 50, 0);
 }
 
@@ -244,44 +269,6 @@ function addContainerWall(obj, x, y, z, width, height, depth) {
     obj.add(mesh);
 }
 
-
-function createContainer() {
-    'use strict';
-    var container = new THREE.Object3D();
-    const containerWidth = 25;
-    const containerHeight = 10;
-    const containerDepth = 15;
-    addContainerBase(container, 0, -containerHeight / 2, 0, containerWidth, containerDepth);
-    // frontal walls
-    addContainerWall(container, containerWidth/2, 0, 0, 1, containerHeight, containerDepth);
-    addContainerWall(container, -containerWidth/2, 0, 0, 1, containerHeight, containerDepth);
-    // lateral walls
-    addContainerWall(container, 0, 0, -containerDepth / 2, containerWidth, containerHeight, 1);
-    addContainerWall(container, 0, 0, containerDepth / 2, containerWidth, containerHeight, 1);
-    container.position.set(-15, 0, -15);
-    scene.add(container);
-}
-
-
-function createCargos() {
-    let cargos = new THREE.Object3D();
-    let cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
-    let cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
-    let cargo3 = createMesh(new THREE.BoxGeometry(3, 4, 1), 0x0ffff0);
-    // randomly scatters the cargos
-    cargo1.position.set(-5, 0, -25);
-    cargo2.position.set(20, 0, 20);
-    cargo3.position.set(15, 0, -15);
-    cargos.add(cargo1);
-    cargos.add(cargo2);
-    cargos.add(cargo3);
-    scene.add(cargo1);
-    scene.add(cargo2);
-    scene.add(cargo3);
-    scene.add(cargos);
-}
-
-
 function createGroundPlane() {
     const planeWidth = 10000;
     const planeHeight = 10000;
@@ -295,75 +282,6 @@ function createGroundPlane() {
     plane.position.set(0, 0, 0); 
     plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
-}
-
-function createHUD() {
-    const hudEl = document.getElementById('hud');
-    hudEl.innerHTML = '';
-    keys = {
-        '1': 'Frontal Camera',
-        '2': 'Lateral Camera',
-        '3': 'Top Camera',
-        '4': 'Orthographic Camera',
-        '5': 'Perspective Camera',
-        '6': 'Mobile Camera',
-        'W': 'Move Forward',
-        'S': 'Move Backward',
-        'Left Arrow': 'Rotate Left',
-        'Right Arrow': 'Rotate Right',
-        'Up Arrow': 'Raise Cargo',
-        'Down Arrow': 'Lower Cargo',
-        'R': 'Close Claw',
-        'F': 'Open Claw',
-        'V': 'Toggle Wireframe'
-    };
-    
-    Object.keys(keys).forEach(key => {
-        const span = document.createElement('span');
-        span.innerHTML = key;
-        const description = keys[key];
-        const keyBoxClass = 'key-box';
-        hudEl.innerHTML += `<div class="${keyBoxClass}">${key}: ${description}</div>`;
-    });
-
-    
-
-    
-  
-}
-
-function updateHUD() {
-    const hudEl = document.getElementById('hud');
-    hudEl.innerHTML = '';
-    
-    keys.forEach(key => {
-        const span = document.createElement('span');
-        span.innerHTML = key;
-        hudEl.appendChild(span);
-    });
-}
-
-function createMesh(geometry, color) {
-    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
-    var mesh = new THREE.Mesh(geometry, material);
-    return mesh;
-}
-
-function addContainerBase(obj, x, y, z, width, depth) {
-    'use strict';
-    var geometry = new THREE.BoxGeometry(width, 1, depth);
-    var mesh = createMesh(geometry, 0x000000);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-
-function addContainerWall(obj, x, y, z, width, height, depth) {
-    'use strict';
-    var geometry = new THREE.BoxGeometry(width, height, depth);
-    var mesh = createMesh(geometry, 0x000000);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
 }
 
 
@@ -434,22 +352,6 @@ function createCargos() {
     cargos.add(cargo5);
     cargos.add(cargo6);
     scene.add(cargos);
-}
-
-
-function createGroundPlane() {
-    const planeWidth = 10000;
-    const planeHeight = 10000;
-
-    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-
-    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x9fff65, side: THREE.DoubleSide, wireframe: wireframe });
-
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-
-    plane.position.set(0, 0, 0);
-    plane.rotation.x = -Math.PI / 2;
-    scene.add(plane);
 }
 
 //////////////////////
@@ -555,6 +457,7 @@ function onKeyDown(e) {
         case 83: // S
         case 115: // s
             g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
+            updateCameraPosition();
             break;
         case 37: // Left
             g_top.rotation.y += Math.PI / 180;
