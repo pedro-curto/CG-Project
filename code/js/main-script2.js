@@ -12,7 +12,7 @@ var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
-var items = [];
+var keys = {};
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
 
@@ -33,6 +33,7 @@ function createScene() {
     createContainer();
     createCargos();
     //createGroundPlane();
+    createHUD();
 }
 
 //////////////////////
@@ -109,7 +110,6 @@ function switchCamera(cameraType) {
 function createMesh(geometry, color) {
     var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, material);
-    items.push(mesh);
     return mesh;
 }
 
@@ -294,6 +294,52 @@ function createGroundPlane() {
     plane.position.set(0, 0, 0); 
     plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
+}
+
+function createHUD() {
+    const hudEl = document.getElementById('hud');
+    hudEl.innerHTML = '';
+    keys = {
+        '1': 'Frontal Camera',
+        '2': 'Lateral Camera',
+        '3': 'Top Camera',
+        '4': 'Orthographic Camera',
+        '5': 'Perspective Camera',
+        '6': 'Mobile Camera',
+        'W': 'Move Forward',
+        'S': 'Move Backward',
+        'Left Arrow': 'Rotate Left',
+        'Right Arrow': 'Rotate Right',
+        'Up Arrow': 'Raise Cargo',
+        'Down Arrow': 'Lower Cargo',
+        'R': 'Close Claw',
+        'F': 'Open Claw',
+        'V': 'Toggle Wireframe'
+    };
+    
+    Object.keys(keys).forEach(key => {
+        const span = document.createElement('span');
+        span.innerHTML = key;
+        const description = keys[key];
+        const keyBoxClass = 'key-box';
+        hudEl.innerHTML += `<div class="${keyBoxClass}">${key}: ${description}</div>`;
+    });
+
+    
+
+    
+  
+}
+
+function updateHUD() {
+    const hudEl = document.getElementById('hud');
+    hudEl.innerHTML = '';
+    
+    keys.forEach(key => {
+        const span = document.createElement('span');
+        span.innerHTML = key;
+        hudEl.appendChild(span);
+    });
 }
 
 function createMesh(geometry, color) {
