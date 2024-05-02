@@ -13,8 +13,6 @@ var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keys = {};
-var keys = {};
-var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
@@ -99,6 +97,13 @@ function switchCamera(cameraType) {
             break;
 
     }
+}
+
+function setCamera(camera, x, y, z, xLook, yLook, zLook) {
+    camera.position.x = x;
+    camera.position.y = y;
+    camera.position.z = z;
+    camera.lookAt(xLook, yLook, zLook);
 }
 /////////////////////
 /* CREATE LIGHT(S) */
@@ -232,10 +237,8 @@ function createTopSection() {
     lanca = createBoxObject(0, 1 + 2, -15 - 1, 2, 2, 30, 0xff000f);
     contra_lanca = createBoxObject(0, 2 + 1, 4 + 1, 2, 2, 8, 0xff000f);
     porta_lanca = createBoxObject(0, 3 + 2, 0, 2, 6, 2, 0xf0f00f);
-
     tirante_frente = createCylinderObject(0, 5.9, -14.5, 0.1, 0.1, 28, 0xff0000);
     tirante_frente.rotateX(0.455*Math.PI);
-
     tirante_tras = createCylinderObject(0, 5.9, 5.5, 0.1, 0.1, 12, 0xff0000);
     tirante_tras.rotateX(-0.397*Math.PI);
 
@@ -560,10 +563,3 @@ function onKeyUp(e){
 
 init();
 animate();
-
-function setCamera(camera, x, y, z, xLook, yLook, zLook) {
-    camera.position.x = x;
-    camera.position.y = y;
-    camera.position.z = z;
-    camera.lookAt(xLook, yLook, zLook);
-}
