@@ -41,17 +41,15 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
+    const widthRatio = window.innerWidth / 24;
+    const heightRatio = window.innerHeight / 24;
     const aspectRatio = window.innerWidth / window.innerHeight;
-    camera1 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera2 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera3 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera4 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera5 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera1 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera2 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera3 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera4 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera5 = new THREE.PerspectiveCamera(70, aspectRatio, 1, 1000);
+    camera6 = new THREE.PerspectiveCamera(70, aspectRatio, 0.1, 1000);
 
     setCamera(camera1, 0, 30, -50, 0, 30, 0);
     setCamera(camera2, 50, 30, 0, 0, 30, 0);
@@ -63,7 +61,7 @@ function createCamera() {
     camera6.position.set(0, -0.1, 0); // avoids the camera to be inside the object
     g_garra.add(camera6);
 
-    camera = camera5; // set default camera
+    camera = camera6; // set default camera
 }
 
 function switchCamera(cameraType) {
@@ -354,13 +352,27 @@ function createContainer() {
     const containerWidth = 25;
     const containerHeight = 10;
     const containerDepth = 15;
+    const wallThickness = 1;
+    const halfWidth = containerWidth / 2;
+    const halfDepth = containerDepth / 2;
+    const halfHeight = containerHeight / 2;
     addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
+    /*
     // frontal walls
-    addContainerWall(container, containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
-    addContainerWall(container, -containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, halfWidth-wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, -halfWidth+wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
     // lateral walls
-    addContainerWall(container, 0, containerHeight/2, -containerDepth / 2, containerWidth, containerHeight, 1);
-    addContainerWall(container, 0, containerHeight/2, containerDepth / 2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, halfHeight, -halfDepth+wallThickness/2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, halfHeight, halfDepth-wallThickness / 2, containerWidth, containerHeight, 1);*/
+    // NEW WALLS
+    // Front wall
+    addContainerWall(container, 0, containerHeight / 2, -halfDepth + wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // Back wall
+    addContainerWall(container, 0, containerHeight / 2, halfDepth - wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // Left wall
+    addContainerWall(container, -halfWidth + wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
+    // Right wall
+    addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
     container.position.set(-15, 0, -15);
     scene.add(container);
 }
