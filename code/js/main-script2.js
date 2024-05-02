@@ -40,7 +40,7 @@ function createCamera() {
     camera4 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
         window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
     camera5 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     setCamera(camera1, 0, 0, 50, 0, 0, 0);
     setCamera(camera2, 50, 0, 0, 0, 0, 0);
@@ -311,39 +311,39 @@ function onKeyDown(e) {
             g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
             break;
         case 37: // Left
-            g_top.rotation.y += Math.PI / 24;
+            g_top.rotation.y += Math.PI / 180;
             break;
         case 39: // Right
-            g_top.rotation.y -= Math.PI / 24;
+            g_top.rotation.y -= Math.PI / 180;
             break;
         case 38: // Up
             const len = cabo.geometry.parameters.height;
             if (len - 1 < 3) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - 1);
-            cabo.position.y += 0.5;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - 0.2);
+            cabo.position.y += 0.1;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 40: // Down
             const len2 = cabo.geometry.parameters.height;
             if (len2 + 1 > 50) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 1);
-            cabo.position.y -= 0.5;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 0.2);
+            cabo.position.y -= 0.1;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 82: // R (close claw)
             if (pivot_pinca1.rotation.z > -Math.PI/7) {
-                pivot_pinca1.rotateZ(-Math.PI/24);
-                pivot_pinca2.rotateZ(Math.PI/24);
-                pivot_pinca3.rotateX(Math.PI/24);
-                pivot_pinca4.rotateX(-Math.PI/24);
+                pivot_pinca1.rotateZ(-Math.PI/180);
+                pivot_pinca2.rotateZ(Math.PI/180);
+                pivot_pinca3.rotateX(Math.PI/180);
+                pivot_pinca4.rotateX(-Math.PI/180);
             }
             break;
         case 70: // F (open claw)
             if (pivot_pinca1.rotation.z < Math.PI/6) {
-                pivot_pinca1.rotateZ(Math.PI/24);
-                pivot_pinca2.rotateZ(-Math.PI/24);
-                pivot_pinca3.rotateX(-Math.PI/24);
-                pivot_pinca4.rotateX(Math.PI/24);
+                pivot_pinca1.rotateZ(Math.PI/180);
+                pivot_pinca2.rotateZ(-Math.PI/180);
+                pivot_pinca3.rotateX(-Math.PI/180);
+                pivot_pinca4.rotateX(Math.PI/180);
             }
             break;
         case 86: // V, display/hide wireframe
