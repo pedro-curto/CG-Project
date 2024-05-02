@@ -23,6 +23,9 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xd3d3d3);
+    createCargos();
+    createContainer();
+    createGroundPlane();
     scene.add(g_bot);
     scene.add(g_top);
 }
@@ -215,6 +218,114 @@ g_bot.add(torre);
 
 g_bot.position.set(0, 0, 0);
 
+function createMesh(geometry, color) {
+    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
+    var mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
+function addContainerBase(obj, x, y, z, width, depth) {
+    'use strict';
+    var geometry = new THREE.BoxGeometry(width, 1, depth);
+    var mesh = createMesh(geometry, 0x000000);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+
+function addContainerWall(obj, x, y, z, width, height, depth) {
+    'use strict';
+    var geometry = new THREE.BoxGeometry(width, height, depth);
+    var mesh = createMesh(geometry, 0x000000);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+
+function createContainer() {
+    'use strict';
+    var container = new THREE.Object3D();
+    const containerWidth = 25;
+    const containerHeight = 10;
+    const containerDepth = 15;
+    addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
+    // frontal walls
+    addContainerWall(container, containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, -containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
+    // lateral walls
+    addContainerWall(container, 0, containerHeight/2, -containerDepth / 2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, containerHeight/2, containerDepth / 2, containerWidth, containerHeight, 1);
+    container.position.set(-15, 0, -15);
+    scene.add(container);
+}
+
+function generatePosition(obj) {
+    let objBox = new THREE.Box3();
+    objBox.setFromObject(obj);
+    let height = objBox.max.y - objBox.min.y;
+
+    let x = 0, y = 0;
+    while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30) {
+        x = Math.random() * 24 + 6;
+        y = Math.random() * 24 + 6;
+    }
+    if (Math.random() < 0.5) x *= -1;
+    if (Math.random() < 0.5) y *= -1;
+
+    console.log(obj, x,y);
+    obj.position.set(x, height/2, y);
+}
+
+function createCargos() {
+    let cargos = new THREE.Object3D();
+
+    let cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
+    let cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
+    let cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
+    let cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
+    let cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
+    let cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
+
+    generatePosition(cargo1);
+    generatePosition(cargo2);
+    generatePosition(cargo3);
+    generatePosition(cargo4);
+    generatePosition(cargo5);
+    generatePosition(cargo6);
+
+
+    // randomly scatters the cargos
+
+    // cargo1.position.set(-5, 0 , -25);
+    // cargo2.position.set(20, 0, 20);
+    // cargo3.position.set(15, 0, -15);
+    // cargo4.position.set(2, 0, 2);
+    // cargo5.position.set(4, 0, 4);
+    //  cargo6.position.set(6, (tmp.max.y - tmp.min.y)/2 , 6);
+    cargos.add(cargo1);
+    cargos.add(cargo2);
+    cargos.add(cargo3);
+    cargos.add(cargo4);
+    cargos.add(cargo5);
+    cargos.add(cargo6);
+    scene.add(cargos);
+}
+
+
+function createGroundPlane() {
+    const planeWidth = 10000;
+    const planeHeight = 10000;
+
+    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x9fff65, side: THREE.DoubleSide, wireframe: wireframe });
+
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+    plane.position.set(0, 0, 0);
+    plane.rotation.x = -Math.PI / 2;
+    scene.add(plane);
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
