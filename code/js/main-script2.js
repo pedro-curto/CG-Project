@@ -31,20 +31,21 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
-    camera1 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-    camera2 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-    camera3 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
-    camera4 = new THREE.OrthographicCamera( window.innerWidth / - 12, window.innerWidth / 12,
-        window.innerHeight / 12, window.innerHeight / - 12, 1, 1000 );
+    camera1 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
+        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
+    camera2 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
+        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
+    camera3 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
+        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
+    camera4 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
+        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
     camera5 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
 
-    setCamera(camera1, 0, 0, 50, 0, 0, 0);
-    setCamera(camera2, 50, 0, 0, 0, 0, 0);
-    setCamera(camera3, 0, 70, 0, -1, 0, 0); // Positioned above the scene looking down
+    setCamera(camera1, 0, 30, -50, 0, 30, 0);
+    setCamera(camera2, 50, 30, 0, 0, 30, 0);
+    setCamera(camera3, 0, 70, 0, 0, 0, 0); // Positioned above the scene looking down
+    camera3.rotateZ(Math.PI/2);
     setCamera(camera4, 50, 45, -20, 0, 35, -5);
     setCamera(camera5, 50, 45, -20, 0, 35, -5);
     camera6.rotateX(-Math.PI/2);
