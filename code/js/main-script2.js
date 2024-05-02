@@ -14,6 +14,7 @@ var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var wireframe = true;
 var camera1, camera2, camera3, camera4, camera5, camera6;
+var tirante_frente, tirante_tras;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -187,6 +188,16 @@ g_carrinho.add(cabo);
 g_carrinho.add(g_garra);
 g_carrinho.position.set(0, 2, -15);
 
+tirante_frente = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 28, 50, 2, false, 0, 2*Math.PI),
+            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+tirante_frente.rotateX(0.455*Math.PI);
+tirante_frente.position.set(0, 5.9, -14.5);
+
+tirante_tras = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 12, 50, 2, false, 0, 2*Math.PI),
+            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
+tirante_tras.rotateX(-0.397*Math.PI);
+tirante_tras.position.set(0, 5.9, 5.5);
+
 g_top = new THREE.Object3D();
 g_top.add(cabine);
 g_top.add(lanca);
@@ -194,6 +205,8 @@ g_top.add(contra_lanca);
 g_top.add(porta_lanca);
 g_top.add(g_peso);
 g_top.add(g_carrinho);
+g_top.add(tirante_frente);
+g_top.add(tirante_tras);
 g_top.position.set(0, 50, 0);
 
 g_bot = new THREE.Object3D();
