@@ -14,6 +14,7 @@ var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keys = {};
 var wireframe = true;
+const rotSpeed = 18, ascensionSpeed = 1; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
@@ -58,6 +59,7 @@ function createCamera() {
     setCamera(camera4, 50, 45, -20, 0, 35, -5);
     setCamera(camera5, 50, 45, -20, 0, 35, -5);
     camera6.rotateX(-Math.PI/2);
+    camera6.position.set(0, -0.1, 0); // avoids the camera to be inside the object
     g_garra.add(camera6);
 
     camera = camera5; // set default camera
@@ -119,6 +121,12 @@ function createMesh(geometry, color) {
     return mesh;
 }
 
+function createClawMesh(geometry, color) {
+    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe, side: THREE.DoubleSide});
+    var mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
 
 function createBoxObject(x, y, z, width, height, depth, color) {
     'use strict';
@@ -153,7 +161,7 @@ function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
 
 
 function createClawFinger(geometry, color, rotationX, rotationZ) {
-    var pinca = createMesh(geometry, color);
+    var pinca = createClawMesh(geometry, color);
     pinca.rotateX(rotationX);
     pinca.rotateZ(rotationZ);
     pinca.position.set(0, -1, 0);
@@ -508,39 +516,39 @@ function onKeyDown(e) {
             g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
             break;
         case 37: // Left
-            g_top.rotation.y += Math.PI / 180;
+            g_top.rotation.y += Math.PI / rotSpeed; 
             break;
         case 39: // Right
-            g_top.rotation.y -= Math.PI / 180;
+            g_top.rotation.y -= Math.PI / rotSpeed;
             break;
         case 38: // Up
             const len = cabo.geometry.parameters.height;
             if (len - 1 < 3) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - 0.2);
-            cabo.position.y += 0.1;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed);
+            cabo.position.y += ascensionSpeed/2;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 40: // Down
             const len2 = cabo.geometry.parameters.height;
             if (len2 + 1 > 50) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 0.2);
-            cabo.position.y -= 0.1;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed);
+            cabo.position.y -= ascensionSpeed/2;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 82: // R (close claw)
             if (pivot_pinca1.rotation.z > -Math.PI/7) {
-                pivot_pinca1.rotateZ(-Math.PI/180);
-                pivot_pinca2.rotateZ(Math.PI/180);
-                pivot_pinca3.rotateX(Math.PI/180);
-                pivot_pinca4.rotateX(-Math.PI/180);
+                pivot_pinca1.rotateZ(-Math.PI/rotSpeed);
+                pivot_pinca2.rotateZ(Math.PI/rotSpeed);
+                pivot_pinca3.rotateX(Math.PI/rotSpeed);
+                pivot_pinca4.rotateX(-Math.PI/rotSpeed);
             }
             break;
         case 70: // F (open claw)
             if (pivot_pinca1.rotation.z < Math.PI/6) {
-                pivot_pinca1.rotateZ(Math.PI/180);
-                pivot_pinca2.rotateZ(-Math.PI/180);
-                pivot_pinca3.rotateX(-Math.PI/180);
-                pivot_pinca4.rotateX(Math.PI/180);
+                pivot_pinca1.rotateZ(Math.PI/rotSpeed);
+                pivot_pinca2.rotateZ(-Math.PI/rotSpeed);
+                pivot_pinca3.rotateX(-Math.PI/rotSpeed);
+                pivot_pinca4.rotateX(Math.PI/rotSpeed);
             }
             break;
         case 86: // V, display/hide wireframe
