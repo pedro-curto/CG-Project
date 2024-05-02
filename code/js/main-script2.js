@@ -12,7 +12,7 @@ var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
-var keys = {};
+var keyToElement = new Map();
 var wireframe = true;
 const rotSpeed = 18, ascensionSpeed = 1; // TODO change to 180 and 0.2 or idk
 
@@ -41,6 +41,7 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
+    const aspectRatio = window.innerWidth / window.innerHeight;
     camera1 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
         window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
     camera2 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
@@ -297,8 +298,8 @@ function createGroundPlane() {
 
 function createHUD() {
     const hudEl = document.getElementById('hud');
-    hudEl.innerHTML = '';
-    keys = {
+    hudEl.innerText = '';
+    const keys = {
         '1': 'Frontal Camera',
         '2': 'Lateral Camera',
         '3': 'Top Camera',
@@ -307,39 +308,44 @@ function createHUD() {
         '6': 'Mobile Camera',
         'W': 'Move Forward',
         'S': 'Move Backward',
-        'Left Arrow': 'Rotate Left',
-        'Right Arrow': 'Rotate Right',
-        'Up Arrow': 'Raise Cargo',
-        'Down Arrow': 'Lower Cargo',
+        'ArrowLeft': 'Rotate Left',
+        'ArrowRight': 'Rotate Right',
+        'ArrowUp': 'Raise Cargo',
+        'ArrowDown': 'Lower Cargo',
         'R': 'Close Claw',
         'F': 'Open Claw',
         'V': 'Toggle Wireframe'
     };
     
     Object.keys(keys).forEach(key => {
-        const span = document.createElement('span');
-        span.innerHTML = key;
+        const div = document.createElement('div');
         const description = keys[key];
-        const keyBoxClass = 'key-box';
-        hudEl.innerHTML += `<div class="${keyBoxClass}">${key}: ${description}</div>`;
+        div.textContent = `${key}: ${description}`;
+        div.className = 'key-box';
+        hudEl.appendChild(div);
+        keyToElement.set(key.toLowerCase(), div);
     });
-
-    
-
-    
-  
 }
 
-function updateHUD() {
+function updateHUD(key, active) {
+    const div = keyToElement.get(key.toLowerCase());
+    if (active) {
+        div.classList.add('active');
+    } else {
+        div.classList.remove('active');
+    }
+}
+
+/*function updateHUD() {
     const hudEl = document.getElementById('hud');
     hudEl.innerHTML = '';
     
     keys.forEach(key => {
-        const span = document.createElement('span');
-        span.innerHTML = key;
-        hudEl.appendChild(span);
+        const div = document.createElement('div');
+        div.innerHTML = key;
+        hudEl.appendChild(div);
     });
-}
+}*/
 
 
 function createContainer() {
@@ -459,6 +465,7 @@ function init() {
     render();
 
     document.addEventListener('keydown', onKeyDown, false);
+    document.addEventListener('keyup', onKeyUp, false);
     window.addEventListener("resize", onResize);
 }
 
@@ -493,6 +500,8 @@ export function onResize() {
 /* KEY DOWN CALLBACK */
 ///////////////////////
 function onKeyDown(e) {
+    const key = e.key;
+    updateHUD(key, true);
 
     switch (e.keyCode) {
         case 49: // 1
@@ -565,8 +574,10 @@ function onKeyDown(e) {
 ///////////////////////
 /* KEY UP CALLBACK */
 ///////////////////////
-function onKeyUp(e){
+function onKeyUp(e) {
     'use strict';
+    const key = e.key;
+    updateHUD(key, false);
 }
 
 init();
