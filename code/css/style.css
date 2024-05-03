@@ -26,6 +26,6 @@ body {
 }
 
 #hud .key-box.active {
-    background-color: red;
+    background-color: green;
 }
 
