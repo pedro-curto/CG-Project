@@ -144,22 +144,6 @@ function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
 }
 
 
-function createBoxObject(x, y, z, width, height, depth, color) {
-    'use strict';
-    var mesh = createMesh(new THREE.BoxGeometry(width, height, depth), color);
-    mesh.position.set(x, y, z);
-    return mesh;
-}
-
-
-function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
-    'use strict';
-    var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);
-    mesh.position.set(x, y, z);
-    return mesh;
-}
-
-
 function createClawFinger(geometry, color, rotationX, rotationZ) {
     var pinca = createClawMesh(geometry, color);
     pinca.rotateX(rotationX);
@@ -334,17 +318,6 @@ function updateHUD(key, active) {
         div.classList.remove('active');
     }
 }
-
-/*function updateHUD() {
-    const hudEl = document.getElementById('hud');
-    hudEl.innerHTML = '';
-    
-    keys.forEach(key => {
-        const div = document.createElement('div');
-        div.innerHTML = key;
-        hudEl.appendChild(div);
-    });
-}*/
 
 
 function createContainer() {
