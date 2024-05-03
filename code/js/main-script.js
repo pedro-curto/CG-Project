@@ -127,7 +127,7 @@ function createLights() {
 ////////////////////////
 
 function createMesh(geometry, color) {
-    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
+    var material = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -135,7 +135,7 @@ function createMesh(geometry, color) {
 }
 
 function createClawMesh(geometry, color) {
-    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe, side: THREE.DoubleSide});
+    var material = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe, side: THREE.DoubleSide});
     var mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -196,7 +196,7 @@ function createClaw() {
     g_garra.add(pivot_pinca4);
     g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
 
-    BB_garra = new THREE.Box3().setFromObject(g_garra);
+    BB_garra = new THREE.Sphere(g_garra.getWorldPosition(new THREE.Vector3()), 0.8);
 }
 
 
@@ -340,55 +340,49 @@ function updateHUD(key, active) {
 
 function createContainer() {
     'use strict';
-    var container = new THREE.Object3D();
-    const containerWidth = 25;
-    const containerHeight = 10;
-    const containerDepth = 15;
-    const wallThickness = 1;
-    const halfWidth = containerWidth / 2;
-    const halfDepth = containerDepth / 2;
-    const halfHeight = containerHeight / 2;
-    addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
-    /*
-    // frontal walls
-    addContainerWall(container, halfWidth-wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
-    addContainerWall(container, -halfWidth+wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
-    // lateral walls
-    addContainerWall(container, 0, halfHeight, -halfDepth+wallThickness/2, containerWidth, containerHeight, 1);
-    addContainerWall(container, 0, halfHeight, halfDepth-wallThickness / 2, containerWidth, containerHeight, 1);*/
-    // NEW WALLS
-    // Front wall
-    addContainerWall(container, 0, containerHeight / 2, -halfDepth + wallThickness / 2, containerWidth, containerHeight, wallThickness);
-    // Back wall
-    addContainerWall(container, 0, containerHeight / 2, halfDepth - wallThickness / 2, containerWidth, containerHeight, wallThickness);
-    // Left wall
-    addContainerWall(container, -halfWidth + wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
-    // Right wall
-    addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
-    container.position.set(-15, 0, -15);
-    scene.add(container);
+    // var container = new THREE.Object3D();
+    // const containerWidth = 25;
+    // const containerHeight = 10;
+    // const containerDepth = 15;
+    // const wallThickness = 1;
+    // const halfWidth = containerWidth / 2;
+    // const halfDepth = containerDepth / 2;
+    // const halfHeight = containerHeight / 2;
+    // addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
+    // // Front wall
+    // addContainerWall(container, 0, containerHeight / 2, -halfDepth + wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // // Back wall
+    // addContainerWall(container, 0, containerHeight / 2, halfDepth - wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // // Left wall
+    // addContainerWall(container, -halfWidth + wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
+    // // Right wall
+    // addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
+    // container.position.set(-15, 0, -15);
+    // scene.add(container);
 }
 
 function generatePosition(obj) {
+
     let objBox = new THREE.Box3();
     objBox.setFromObject(obj);
     let height = objBox.max.y - objBox.min.y;
+    let objBB = new THREE.Sphere(obj.position, height/2);
 
-    let x = 0, y = 0;
+    let x = 0, z = 0;
     do {
         do {
             x = Math.random() * 24 + 6;
-            y = Math.random() * 24 + 6;
-        } while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30);
+            z = Math.random() * 24 + 6;
+        } while (Math.sqrt(x**2+z**2) < 6 || Math.sqrt(x**2+z**2) > 30);
 
         if (Math.random() < 0.5) x *= -1;
-        if (Math.random() < 0.5) y *= -1;
+        if (Math.random() < 0.5) z *= -1;
 
-        obj.position.set(x, height/2, y);
-        objBox.setFromObject(obj);
+        obj.position.set(x, height/2, z);
+        objBB.set(obj.position, height/2);
 
-    } while (existsCollisions(objBox));
-    objects.push(objBox);
+    } while (existsCollisions(objBB));
+    objects.push(objBB);
 }
 
 function createCargos() {
@@ -401,6 +395,8 @@ function createCargos() {
     let cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
     let cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
 
+    // randomly scatters the cargos
+
     generatePosition(cargo1);
     generatePosition(cargo2);
     generatePosition(cargo3);
@@ -408,15 +404,6 @@ function createCargos() {
     generatePosition(cargo5);
     generatePosition(cargo6);
 
-
-    // randomly scatters the cargos
-
-    // cargo1.position.set(-5, 0 , -25);
-    // cargo2.position.set(20, 0, 20);
-    // cargo3.position.set(15, 0, -15);
-    // cargo4.position.set(2, 0, 2);
-    // cargo5.position.set(4, 0, 4);
-    //  cargo6.position.set(6, (tmp.max.y - tmp.min.y)/2 , 6);
     cargos.add(cargo1);
     cargos.add(cargo2);
     cargos.add(cargo3);
@@ -432,7 +419,7 @@ function createCargos() {
 function existsCollisions(obj) {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
-        if (obj.intersectsBox(objects[i])) {
+        if (obj.intersectsSphere(objects[i])) {
             return true;
         }
     }
@@ -442,7 +429,7 @@ function existsCollisions(obj) {
 function checkColisions() {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
-        if (BB_garra.intersectsBox(objects[i])) {
+        if (BB_garra.intersectsSphere(objects[i])) {
             console.log("colisao: " + i);
             return true
         }
@@ -503,7 +490,7 @@ function animate() {
     'use strict';
     deltaTime = clock.getDelta();
 
-    BB_garra.setFromObject(g_garra);
+    BB_garra.set(g_garra.getWorldPosition(new THREE.Vector3()), 1.5);
 
     checkColisions();
 
