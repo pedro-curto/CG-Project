@@ -340,25 +340,21 @@ function updateHUD(key, active) {
 
 function createContainer() {
     'use strict';
-    // var container = new THREE.Object3D();
-    // const containerWidth = 25;
-    // const containerHeight = 10;
-    // const containerDepth = 15;
-    // const wallThickness = 1;
-    // const halfWidth = containerWidth / 2;
-    // const halfDepth = containerDepth / 2;
-    // const halfHeight = containerHeight / 2;
-    // addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
-    // // Front wall
-    // addContainerWall(container, 0, containerHeight / 2, -halfDepth + wallThickness / 2, containerWidth, containerHeight, wallThickness);
-    // // Back wall
-    // addContainerWall(container, 0, containerHeight / 2, halfDepth - wallThickness / 2, containerWidth, containerHeight, wallThickness);
-    // // Left wall
-    // addContainerWall(container, -halfWidth + wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
-    // // Right wall
-    // addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
-    // container.position.set(-15, 0, -15);
-    // scene.add(container);
+
+    var container = new THREE.Object3D();
+    var container_walls = new THREE.Mesh(new THREE.CylinderGeometry(15, 10, 5, 4, 5, true), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
+    container_walls.rotateY(Math.PI/4);
+    container_walls.position.set(-15, 2.5, -15);
+    container_walls.castShadow = true;
+    var container_base = new THREE.Mesh(new THREE.PlaneGeometry(Math.sqrt(200), Math.sqrt(200)), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
+    container_base.rotateY(Math.PI/2);
+    container_base.rotateX(-Math.PI/2);
+    container_base.position.set(-15, 0.1, -15);
+    container.add(container_walls);
+    container.add(container_base);
+    scene.add(container);
+
+    BB_container = new THREE.Box3().setFromObject(container);
 }
 
 function generatePosition(obj) {
