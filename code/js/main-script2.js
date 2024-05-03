@@ -14,6 +14,7 @@ var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
 var wireframe = true;
+var deltaTime = new THREE.Clock();
 const rotSpeed = 18, ascensionSpeed = 1; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
@@ -486,7 +487,7 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
-
+    //deltaTime = clock.getDelta();
     // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
     // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
     render();
