@@ -10,7 +10,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
-var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra;
+var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra, BB_container;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
 var wireframe = true;
@@ -367,6 +367,7 @@ function createContainer() {
     addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
     container.position.set(-15, 0, -15);
     scene.add(container);
+    BB_container = new THREE.Box3().setFromObject(container);
 }
 
 function generatePosition(obj) {
@@ -431,6 +432,7 @@ function createCargos() {
 //////////////////////
 function existsCollisions(obj) {
     'use strict';
+    if (obj.intersectsBox(BB_container)) return true;
     for (let i = 0; i < objects.length; i++) {
         if (obj.intersectsBox(objects[i])) {
             return true;
