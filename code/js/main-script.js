@@ -27,6 +27,7 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xd3d3d3);
+
     createBottomSection();
     createTopSection();
     scene.add(g_bot);
@@ -69,18 +70,15 @@ function switchCamera(cameraType) {
     'use strict';
     switch(cameraType) {
         case 'frontal': // 1
-            //console.log('Frontal Camera');
             // aligned with the z-axis
             console.log(camera1.isCamera);
             camera = camera1;
             break;
         case 'lateral': // 2
-            //console.log('Lateral Camera');
             // aligned with the x-axis
             camera = camera2;
             break;
         case 'top': // 3   
-            //console.log('Top Camera');
             // aligned with the y-axis
             camera = camera3;
             break;
@@ -93,7 +91,6 @@ function switchCamera(cameraType) {
             camera = camera5;
             break;
         case 'mobile': // 6
-        case 54: // 6 (câmara móvel com projecção perspectiva)
             console.log('Mobile Camera');
             camera = camera6;
             break;
@@ -341,7 +338,6 @@ function updateHUD(key, active) {
     }
 }
 
-
 function createContainer() {
     'use strict';
     var container = new THREE.Object3D();
@@ -535,7 +531,6 @@ export function onResize() {
 function onKeyDown(e) {
     const key = e.key;
     updateHUD(key, true);
-
     switch (e.keyCode) {
         case 49: // 1
             switchCamera('frontal'); break;
