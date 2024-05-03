@@ -13,13 +13,17 @@ var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra, BB_container;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
-var wireframe = true;
+var wireframe = false;
 var clock = new THREE.Clock(), deltaTime;
 const rotSpeed = 1, ascensionSpeed = 20; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
 var objects = [];
+//var cargo1, cargo2, cargo3, cargo4, cargo5, cargo6;
+var cargos = [];
+var onGoing = false;
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -63,7 +67,7 @@ function createCamera() {
     camera6.position.set(0, -0.1, 0); // avoids the camera to be inside the object
     g_garra.add(camera6);
 
-    camera = camera6; // set default camera
+    camera = camera5; // set default camera
 }
 
 function switchCamera(cameraType) {
@@ -382,14 +386,14 @@ function generatePosition(obj) {
 }
 
 function createCargos() {
-    let cargos = new THREE.Object3D();
+    //let cargos = new THREE.Object3D();
 
-    let cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
-    let cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
-    let cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
-    let cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
-    let cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
-    let cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
+    var cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
+    var cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
+    var cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
+    var cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
+    var cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
+    var cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
 
     // randomly scatters the cargos
 
@@ -400,13 +404,14 @@ function createCargos() {
     generatePosition(cargo5);
     generatePosition(cargo6);
 
-    cargos.add(cargo1);
-    cargos.add(cargo2);
-    cargos.add(cargo3);
-    cargos.add(cargo4);
-    cargos.add(cargo5);
-    cargos.add(cargo6);
-    scene.add(cargos);
+    scene.add(cargo1);
+    scene.add(cargo2);
+    scene.add(cargo3);
+    scene.add(cargo4);
+    scene.add(cargo5);
+    scene.add(cargo6);
+    cargos.push(cargo1, cargo2, cargo3, cargo4, cargo5, cargo6);
+    // scene.add(cargos);
 }
 
 //////////////////////
@@ -428,10 +433,60 @@ function checkColisions() {
     for (let i = 0; i < objects.length; i++) {
         if (BB_garra.intersectsSphere(objects[i])) {
             console.log("colisao: " + i);
-            return true
+            startAnimation(i);
         }
     }
-    return false;
+    // return false;
+}
+
+function betterMod(n, m) {
+    return ((n % m) + m) % m;
+}
+function startAnimation(index) {
+    onGoing = true;
+    g_garra.attach(cargos[index]);
+
+    while (g_garra.position.y < -10) moveUp();
+
+    while (betterMod(g_top.rotation.y, 2*Math.PI) > betterMod(Math.PI/4 + (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI) || betterMod(g_top.rotation.y, 2*Math.PI) < betterMod(Math.PI/4 - (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI)) {
+        rotatePlus();
+    }
+
+    var globalPosition = new THREE.Vector3();
+    var tmp = new THREE.Box3().setFromObject(cargos[index]);
+    var height = tmp.max.y - tmp.min.y;
+    cargos[index].getWorldPosition(globalPosition);
+
+    while (globalPosition.y > height/2 + (ascensionSpeed/2) * deltaTime) {
+        moveDown();
+        cargos[index].getWorldPosition(globalPosition);
+    }
+
+    scene.attach(cargos[index]);
+
+    console.log((180*g_top.rotation.y/Math.PI) % 360);
+
+    onGoing = false;
+}
+
+function rotatePlus() {
+    g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime;
+}
+
+function moveUp() {
+    const len = cabo.geometry.parameters.height;
+    if (len - 1 < 3) return;
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
+    cabo.position.y += (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+}
+
+function moveDown() {
+    const len2 = cabo.geometry.parameters.height;
+    if (len2 + 1 > 50) return;
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
+    cabo.position.y -= (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
 }
 
 ///////////////////////
@@ -513,6 +568,7 @@ export function onResize() {
 /* KEY DOWN CALLBACK */
 ///////////////////////
 function onKeyDown(e) {
+    if (onGoing) return;
     const key = e.key;
     updateHUD(key, true);
     switch (e.keyCode) {
