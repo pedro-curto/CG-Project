@@ -10,7 +10,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
-var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
+var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
 var wireframe = true;
@@ -19,7 +19,7 @@ const rotSpeed = 1, ascensionSpeed = 20; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
-
+var objects = [];
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -33,7 +33,7 @@ function createScene() {
     scene.add(g_top);
     createContainer();
     createCargos();
-    //createGroundPlane();
+    createGroundPlane();
     createHUD();
 }
 
@@ -110,7 +110,21 @@ function setCamera(camera, x, y, z, xLook, yLook, zLook) {
 /////////////////////
 /* CREATE LIGHT(S) */
 /////////////////////
+function createLights() {
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x080820, 1);
+    scene.add(ambientLight);
 
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.shadow.mapSize.width = 5120 // default
+    directionalLight.shadow.mapSize.height = 5120 // default
+    directionalLight.position.set(50, 70, 40);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.top = -100 // default
+    directionalLight.shadow.camera.right = 100 // default
+    directionalLight.shadow.camera.left = -100 // default
+    directionalLight.shadow.camera.bottom = 100 // default
+    scene.add(directionalLight);
+}
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
@@ -118,12 +132,16 @@ function setCamera(camera, x, y, z, xLook, yLook, zLook) {
 function createMesh(geometry, color) {
     var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     return mesh;
 }
 
 function createClawMesh(geometry, color) {
     var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe, side: THREE.DoubleSide});
     var mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     return mesh;
 }
 
@@ -180,6 +198,8 @@ function createClaw() {
     g_garra.add(pivot_pinca3);
     g_garra.add(pivot_pinca4);
     g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+
+    BB_garra = new THREE.Box3().setFromObject(g_garra);
 }
 
 
@@ -265,15 +285,16 @@ function addContainerWall(obj, x, y, z, width, height, depth) {
 }
 
 function createGroundPlane() {
-    const planeWidth = 10000;
-    const planeHeight = 10000;
+    const planeWidth = 1000;
+    const planeHeight = 1000;
     
     const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
     
-    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x9fff65, side: THREE.DoubleSide });
+    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x9fff65, side: THREE.DoubleSide, wireframe: wireframe});
     
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     
+    plane.receiveShadow = true;
     plane.position.set(0, 0, 0); 
     plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
@@ -312,14 +333,11 @@ function createHUD() {
 
 function updateHUD(key, active) {
     const div = keyToElement.get(key.toLowerCase());
-        if (div) {
-        if (active) {
-            div.classList.add('active');
-        } else {
-            div.classList.remove('active');
-        }
-    } else {    
-        /* TODO: handle invalid key */
+    if (!div) return;
+    if (active) {
+        div.classList.add('active');
+    } else {
+        div.classList.remove('active');
     }
 }
 
@@ -361,15 +379,20 @@ function generatePosition(obj) {
     let height = objBox.max.y - objBox.min.y;
 
     let x = 0, y = 0;
-    while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30) {
-        x = Math.random() * 24 + 6;
-        y = Math.random() * 24 + 6;
-    }
-    if (Math.random() < 0.5) x *= -1;
-    if (Math.random() < 0.5) y *= -1;
+    do {
+        do {
+            x = Math.random() * 24 + 6;
+            y = Math.random() * 24 + 6;
+        } while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30);
 
-    console.log(obj, x,y);
-    obj.position.set(x, height/2, y);
+        if (Math.random() < 0.5) x *= -1;
+        if (Math.random() < 0.5) y *= -1;
+
+        obj.position.set(x, height/2, y);
+        objBox.setFromObject(obj);
+
+    } while (existsCollisions(objBox));
+    objects.push(objBox);
 }
 
 function createCargos() {
@@ -410,9 +433,25 @@ function createCargos() {
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
-function checkCollisions() {
+function existsCollisions(obj) {
     'use strict';
+    for (let i = 0; i < objects.length; i++) {
+        if (obj.intersectsBox(objects[i])) {
+            return true;
+        }
+    }
+    return false;
+}
 
+function checkColisions() {
+    'use strict';
+    for (let i = 0; i < objects.length; i++) {
+        if (BB_garra.intersectsBox(objects[i])) {
+            console.log("colisao: " + i);
+            return true
+        }
+    }
+    return false;
 }
 
 ///////////////////////
@@ -448,9 +487,11 @@ function init() {
         antialias: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
     createScene();
     createCamera();
+    createLights();
 
     render();
 
@@ -465,10 +506,12 @@ function init() {
 function animate() {
     'use strict';
     deltaTime = clock.getDelta();
-    // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
-    // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
+
+    BB_garra.setFromObject(g_garra);
+
+    checkColisions();
+
     render();
-    
     requestAnimationFrame(animate);
 }
 
