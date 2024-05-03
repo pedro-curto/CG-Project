@@ -10,12 +10,16 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var renderer, scene, camera;
 var g_top, g_bot, lanca, cabine, torre, base, contra_lanca, porta_lanca;
 var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
-var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4;
+var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
+var keyToElement = new Map();
 var wireframe = true;
+var clock = new THREE.Clock(), deltaTime;
+const rotSpeed = 1, ascensionSpeed = 20; // TODO change to 180 and 0.2 or idk
+
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
-
+var objects = [];
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -23,11 +27,15 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xd3d3d3);
-    createCargos();
-    createContainer();
-    createGroundPlane();
+
+    createBottomSection();
+    createTopSection();
     scene.add(g_bot);
     scene.add(g_top);
+    createContainer();
+    createCargos();
+    createGroundPlane();
+    createHUD();
 }
 
 //////////////////////
@@ -35,16 +43,15 @@ function createScene() {
 //////////////////////
 function createCamera() {
     'use strict';
-    camera1 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera2 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera3 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera4 = new THREE.OrthographicCamera( window.innerWidth / - 24, window.innerWidth / 24,
-        window.innerHeight / 24, window.innerHeight / - 24, 1, 1000 );
-    camera5 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera6 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const widthRatio = window.innerWidth / 24;
+    const heightRatio = window.innerHeight / 24;
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    camera1 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera2 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera3 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera4 = new THREE.OrthographicCamera( -widthRatio, widthRatio, heightRatio, -heightRatio, 1, 1000 );
+    camera5 = new THREE.PerspectiveCamera(70, aspectRatio, 1, 1000);
+    camera6 = new THREE.PerspectiveCamera(70, aspectRatio, 0.1, 1000);
 
     setCamera(camera1, 0, 30, -50, 0, 30, 0);
     setCamera(camera2, 50, 30, 0, 0, 30, 0);
@@ -53,27 +60,25 @@ function createCamera() {
     setCamera(camera4, 50, 45, -20, 0, 35, -5);
     setCamera(camera5, 50, 45, -20, 0, 35, -5);
     camera6.rotateX(-Math.PI/2);
+    camera6.position.set(0, -0.1, 0); // avoids the camera to be inside the object
     g_garra.add(camera6);
 
-    camera = camera5; // set default camera
+    camera = camera6; // set default camera
 }
 
 function switchCamera(cameraType) {
     'use strict';
     switch(cameraType) {
         case 'frontal': // 1
-            console.log('Frontal Camera');
             // aligned with the z-axis
             console.log(camera1.isCamera);
             camera = camera1;
             break;
         case 'lateral': // 2
-            console.log('Lateral Camera');
             // aligned with the x-axis
             camera = camera2;
             break;
         case 'top': // 3   
-            console.log('Top Camera');
             // aligned with the y-axis
             camera = camera3;
             break;
@@ -92,137 +97,172 @@ function switchCamera(cameraType) {
 
     }
 }
+
+function setCamera(camera, x, y, z, xLook, yLook, zLook) {
+    camera.position.x = x;
+    camera.position.y = y;
+    camera.position.z = z;
+    camera.lookAt(xLook, yLook, zLook);
+}
 /////////////////////
 /* CREATE LIGHT(S) */
 /////////////////////
+function createLights() {
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x080820, 1);
+    scene.add(ambientLight);
 
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.shadow.mapSize.width = 5120 // default
+    directionalLight.shadow.mapSize.height = 5120 // default
+    directionalLight.position.set(50, 70, 40);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.top = -100 // default
+    directionalLight.shadow.camera.right = 100 // default
+    directionalLight.shadow.camera.left = -100 // default
+    directionalLight.shadow.camera.bottom = 100 // default
+    scene.add(directionalLight);
+}
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
-base = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 5), new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: wireframe }));
-base.position.set(0, 1, 0);
-
-torre = new THREE.Mesh(new THREE.BoxGeometry(2, 48, 2), new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: wireframe }));
-torre.position.set(0, 24 + 2, 0);
-
-cabine = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshBasicMaterial({ color: 0x0ffff0, wireframe: wireframe }));
-cabine.position.set(0, 1, 0);
-
-porta_lanca = new THREE.Mesh(new THREE.BoxGeometry(2,6,2), new THREE.MeshBasicMaterial({ color: 0xf0f00f, wireframe: wireframe }));
-porta_lanca.position.set(0, 3 + 2, 0);
-
-contra_lanca = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 8), new THREE.MeshBasicMaterial({ color: 0xff000f, wireframe: wireframe }));
-contra_lanca.position.set(0, 2 + 1, 4 + 1);
-
-lanca = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 30), new THREE.MeshBasicMaterial({ color: 0xff000f, wireframe: wireframe }));
-lanca.position.set(0, 1 + 2, -15 - 1);
-
-contra_peso1 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: wireframe }));
-contra_peso1.position.set(0, 2, 0)
-
-contra_peso2 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: wireframe }));
-contra_peso2.position.set(0, 2, 1)
-
-contra_peso3 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x777777, wireframe: wireframe }));
-contra_peso3.position.set(0, 2, 2)
-
-contra_peso4 = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1), new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: wireframe }));
-contra_peso4.position.set(0, 2, 3)
-
-carrinho = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1), new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: wireframe }));
-
-cabo = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: false }));
-cabo.position.set(0, -5, 0);
-
-garra = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), new THREE.MeshBasicMaterial({ color: 0xff00f0, wireframe: false }));
-
-pinca1 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3),
-         new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-pinca1.rotateX(-Math.PI/2);
-pinca1.position.set(0, -1, 0);
-
-pinca2 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-pinca2.rotateX(-Math.PI/2);
-pinca2.position.set(0, -1, 0);
-
-pinca3 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-pinca3.rotateX(-Math.PI/2);
-pinca3.rotateZ(-Math.PI/2);
-pinca3.position.set(0, -1, 0);
-
-pinca4 = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-pinca4.rotateX(-Math.PI/2);
-pinca4.rotateZ(-Math.PI/2);
-pinca4.position.set(0, -1, 0);
-
-pivot_pinca1 = new THREE.Object3D();
-pivot_pinca1.add(pinca1);
-
-pivot_pinca2 = new THREE.Object3D();
-pivot_pinca2.add(pinca2);
-
-pivot_pinca3 = new THREE.Object3D();
-pivot_pinca3.add(pinca3);
-
-pivot_pinca4 = new THREE.Object3D();
-pivot_pinca4.add(pinca4);
-
-g_peso = new THREE.Object3D();
-g_peso.add(contra_peso1);
-g_peso.add(contra_peso2);
-g_peso.add(contra_peso3);
-g_peso.add(contra_peso4);
-g_peso.position.set(0, 0, 9.5);
-
-g_garra = new THREE.Object3D();
-g_garra.add(garra);
-g_garra.add(pivot_pinca1);
-g_garra.add(pivot_pinca2);
-g_garra.add(pivot_pinca3);
-g_garra.add(pivot_pinca4);
-g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
-
-g_carrinho = new THREE.Object3D();
-g_carrinho.add(carrinho);
-g_carrinho.add(cabo);
-g_carrinho.add(g_garra);
-g_carrinho.position.set(0, 2, -15);
-
-tirante_frente = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 28, 50, 2, false, 0, 2*Math.PI),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-tirante_frente.rotateX(0.455*Math.PI);
-tirante_frente.position.set(0, 5.9, -14.5);
-
-tirante_tras = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 12, 50, 2, false, 0, 2*Math.PI),
-            new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: wireframe, side: THREE.DoubleSide }));
-tirante_tras.rotateX(-0.397*Math.PI);
-tirante_tras.position.set(0, 5.9, 5.5);
-
-g_top = new THREE.Object3D();
-g_top.add(cabine);
-g_top.add(lanca);
-g_top.add(contra_lanca);
-g_top.add(porta_lanca);
-g_top.add(g_peso);
-g_top.add(g_carrinho);
-g_top.add(tirante_frente);
-g_top.add(tirante_tras);
-g_top.position.set(0, 50, 0);
-
-g_bot = new THREE.Object3D();
-g_bot.add(base);
-g_bot.add(torre);
-
-g_bot.position.set(0, 0, 0);
 
 function createMesh(geometry, color) {
     var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     return mesh;
 }
+
+function createClawMesh(geometry, color) {
+    var material = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe, side: THREE.DoubleSide});
+    var mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+}
+
+
+function createBoxObject(x, y, z, width, height, depth, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.BoxGeometry(width, height, depth), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
+
+
+function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
+    'use strict';
+    var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);
+    mesh.position.set(x, y, z);
+    return mesh;
+}
+
+
+function createClawFinger(geometry, color, rotationX, rotationZ) {
+    var pinca = createClawMesh(geometry, color);
+    pinca.rotateX(rotationX);
+    pinca.rotateZ(rotationZ);
+    pinca.position.set(0, -1, 0);
+    return pinca;
+}
+
+
+function createClaw() {
+    cabo = createCylinderObject(0, -5, 0, 0.1, 0.1, 10, 0x00ff00);
+    garra = createMesh(new THREE.BoxGeometry(0.5, 0.2, 0.5), 0xff00f0);
+    
+    pinca1 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000, -Math.PI/2, 0);
+    pinca2 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000, -Math.PI/2, 0);
+    pinca3 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, 2*Math.PI/3), 0xff0000, -Math.PI/2, -Math.PI/2);
+    pinca4 = createClawFinger(new THREE.CylinderGeometry(1, 1, 0.2, 50, 2, true, 0, -2*Math.PI/3), 0xff0000, -Math.PI/2, -Math.PI/2);
+    
+    pivot_pinca1 = new THREE.Object3D();
+    pivot_pinca1.add(pinca1);
+    
+    pivot_pinca2 = new THREE.Object3D();
+    pivot_pinca2.add(pinca2);
+
+    pivot_pinca3 = new THREE.Object3D();
+    pivot_pinca3.add(pinca3);
+    
+    pivot_pinca4 = new THREE.Object3D();
+    pivot_pinca4.add(pinca4);
+    g_garra = new THREE.Object3D();
+    g_garra.add(garra);
+    g_garra.add(pivot_pinca1);
+    g_garra.add(pivot_pinca2);
+    g_garra.add(pivot_pinca3);
+    g_garra.add(pivot_pinca4);
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+
+    BB_garra = new THREE.Box3().setFromObject(g_garra);
+}
+
+
+function createCart() {
+    'use strict';
+    carrinho = createBoxObject(0, 0, 0, 1, 0.5, 1, 0x0000ff);
+    g_carrinho = new THREE.Object3D();
+    g_carrinho.add(carrinho);
+    g_carrinho.add(cabo);
+    g_carrinho.add(g_garra);
+    g_carrinho.position.set(0, 2, -15);
+}
+
+
+function createCounterWeight() {
+    'use strict';
+    contra_peso1 = createBoxObject(0, 2, 0, 2, 4, 1, 0x555555);
+    contra_peso2 = createBoxObject(0, 2, 1, 2, 4, 1, 0x666666);
+    contra_peso3 = createBoxObject(0, 2, 2, 2, 4, 1, 0x777777);
+    contra_peso4 = createBoxObject(0, 2, 3, 2, 4, 1, 0x888888);
+    g_peso = new THREE.Object3D();
+    g_peso.add(contra_peso1);
+    g_peso.add(contra_peso2);
+    g_peso.add(contra_peso3);
+    g_peso.add(contra_peso4);
+    g_peso.position.set(0, 0, 9.5);
+}
+
+
+function createBottomSection() {
+    'use strict';
+    base = createBoxObject(0, 1, 0, 5, 2, 5, 0x00ffff);
+    torre = createBoxObject(0, 24 + 2, 0, 2, 48, 2, 0xff00ff);
+    g_bot = new THREE.Object3D();
+    g_bot.add(base);
+    g_bot.add(torre);
+    g_bot.position.set(0, 0, 0);
+}
+
+
+function createTopSection() {
+    'use strict';
+    createCounterWeight();
+    createClaw();
+    createCart();
+    cabine = createBoxObject(0, 1, 0, 2, 2, 2, 0x0ffff0);
+    lanca = createBoxObject(0, 1 + 2, -15 - 1, 2, 2, 30, 0xff000f);
+    contra_lanca = createBoxObject(0, 2 + 1, 4 + 1, 2, 2, 8, 0xff000f);
+    porta_lanca = createBoxObject(0, 3 + 2, 0, 2, 6, 2, 0xf0f00f);
+    tirante_frente = createCylinderObject(0, 5.9, -14.5, 0.1, 0.1, 28, 0xff0000);
+    tirante_frente.rotateX(0.455*Math.PI);
+    tirante_tras = createCylinderObject(0, 5.9, 5.5, 0.1, 0.1, 12, 0xff0000);
+    tirante_tras.rotateX(-0.397*Math.PI);
+
+    g_top = new THREE.Object3D();
+    g_top.add(cabine);
+    g_top.add(lanca);
+    g_top.add(contra_lanca);
+    g_top.add(porta_lanca);
+    g_top.add(g_peso);
+    g_top.add(g_carrinho);
+    g_top.add(tirante_frente);
+    g_top.add(tirante_tras);
+    g_top.position.set(0, 50, 0);
+}
+
 
 function addContainerBase(obj, x, y, z, width, depth) {
     'use strict';
@@ -241,6 +281,62 @@ function addContainerWall(obj, x, y, z, width, height, depth) {
     obj.add(mesh);
 }
 
+function createGroundPlane() {
+    const planeWidth = 1000;
+    const planeHeight = 1000;
+    
+    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    
+    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x9fff65, side: THREE.DoubleSide, wireframe: wireframe});
+    
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    
+    plane.receiveShadow = true;
+    plane.position.set(0, 0, 0); 
+    plane.rotation.x = -Math.PI / 2;
+    scene.add(plane);
+}
+
+function createHUD() {
+    const hudEl = document.getElementById('hud');
+    hudEl.innerText = '';
+    const keys = {
+        '1': 'Frontal Camera',
+        '2': 'Lateral Camera',
+        '3': 'Top Camera',
+        '4': 'Orthographic Camera',
+        '5': 'Perspective Camera',
+        '6': 'Mobile Camera',
+        'W': 'Move Forward',
+        'S': 'Move Backward',
+        'ArrowLeft': 'Rotate Left',
+        'ArrowRight': 'Rotate Right',
+        'ArrowUp': 'Raise Cargo',
+        'ArrowDown': 'Lower Cargo',
+        'R': 'Close Claw',
+        'F': 'Open Claw',
+        'V': 'Toggle Wireframe'
+    };
+    
+    Object.keys(keys).forEach(key => {
+        const div = document.createElement('div');
+        const description = keys[key];
+        div.textContent = `${key}: ${description}`;
+        div.className = 'key-box';
+        hudEl.appendChild(div);
+        keyToElement.set(key.toLowerCase(), div);
+    });
+}
+
+function updateHUD(key, active) {
+    const div = keyToElement.get(key.toLowerCase());
+    if (!div) return;
+    if (active) {
+        div.classList.add('active');
+    } else {
+        div.classList.remove('active');
+    }
+}
 
 function createContainer() {
     'use strict';
@@ -248,13 +344,27 @@ function createContainer() {
     const containerWidth = 25;
     const containerHeight = 10;
     const containerDepth = 15;
+    const wallThickness = 1;
+    const halfWidth = containerWidth / 2;
+    const halfDepth = containerDepth / 2;
+    const halfHeight = containerHeight / 2;
     addContainerBase(container, 0, 0.5, 0, containerWidth, containerDepth);
+    /*
     // frontal walls
-    addContainerWall(container, containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
-    addContainerWall(container, -containerWidth/2, containerHeight/2, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, halfWidth-wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
+    addContainerWall(container, -halfWidth+wallThickness/2, halfHeight, 0, 1, containerHeight, containerDepth);
     // lateral walls
-    addContainerWall(container, 0, containerHeight/2, -containerDepth / 2, containerWidth, containerHeight, 1);
-    addContainerWall(container, 0, containerHeight/2, containerDepth / 2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, halfHeight, -halfDepth+wallThickness/2, containerWidth, containerHeight, 1);
+    addContainerWall(container, 0, halfHeight, halfDepth-wallThickness / 2, containerWidth, containerHeight, 1);*/
+    // NEW WALLS
+    // Front wall
+    addContainerWall(container, 0, containerHeight / 2, -halfDepth + wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // Back wall
+    addContainerWall(container, 0, containerHeight / 2, halfDepth - wallThickness / 2, containerWidth, containerHeight, wallThickness);
+    // Left wall
+    addContainerWall(container, -halfWidth + wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
+    // Right wall
+    addContainerWall(container, halfWidth - wallThickness / 2, containerHeight / 2, 0, wallThickness, containerHeight, containerDepth - wallThickness * 2);
     container.position.set(-15, 0, -15);
     scene.add(container);
 }
@@ -265,15 +375,20 @@ function generatePosition(obj) {
     let height = objBox.max.y - objBox.min.y;
 
     let x = 0, y = 0;
-    while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30) {
-        x = Math.random() * 24 + 6;
-        y = Math.random() * 24 + 6;
-    }
-    if (Math.random() < 0.5) x *= -1;
-    if (Math.random() < 0.5) y *= -1;
+    do {
+        do {
+            x = Math.random() * 24 + 6;
+            y = Math.random() * 24 + 6;
+        } while (Math.sqrt(x**2+y**2) < 6 || Math.sqrt(x**2+y**2) > 30);
 
-    console.log(obj, x,y);
-    obj.position.set(x, height/2, y);
+        if (Math.random() < 0.5) x *= -1;
+        if (Math.random() < 0.5) y *= -1;
+
+        obj.position.set(x, height/2, y);
+        objBox.setFromObject(obj);
+
+    } while (existsCollisions(objBox));
+    objects.push(objBox);
 }
 
 function createCargos() {
@@ -311,28 +426,28 @@ function createCargos() {
     scene.add(cargos);
 }
 
-
-function createGroundPlane() {
-    const planeWidth = 10000;
-    const planeHeight = 10000;
-
-    const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-
-    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x9fff65, side: THREE.DoubleSide, wireframe: wireframe });
-
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-
-    plane.position.set(0, 0, 0);
-    plane.rotation.x = -Math.PI / 2;
-    scene.add(plane);
-}
-
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
-function checkCollisions() {
+function existsCollisions(obj) {
     'use strict';
+    for (let i = 0; i < objects.length; i++) {
+        if (obj.intersectsBox(objects[i])) {
+            return true;
+        }
+    }
+    return false;
+}
 
+function checkColisions() {
+    'use strict';
+    for (let i = 0; i < objects.length; i++) {
+        if (BB_garra.intersectsBox(objects[i])) {
+            console.log("colisao: " + i);
+            return true
+        }
+    }
+    return false;
 }
 
 ///////////////////////
@@ -368,14 +483,16 @@ function init() {
         antialias: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
-
     createScene();
     createCamera();
+    createLights();
 
     render();
 
     document.addEventListener('keydown', onKeyDown, false);
+    document.addEventListener('keyup', onKeyUp, false);
     window.addEventListener("resize", onResize);
 }
 
@@ -384,14 +501,13 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+    deltaTime = clock.getDelta();
 
-    // var deltaX = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
-    // var deltaY = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
+    BB_garra.setFromObject(g_garra);
 
-    // moveCamera(deltaX, deltaY);
-    
+    checkColisions();
+
     render();
-    
     requestAnimationFrame(animate);
 }
 
@@ -413,7 +529,8 @@ export function onResize() {
 /* KEY DOWN CALLBACK */
 ///////////////////////
 function onKeyDown(e) {
-
+    const key = e.key;
+    updateHUD(key, true);
     switch (e.keyCode) {
         case 49: // 1
             switchCamera('frontal'); break;
@@ -429,46 +546,48 @@ function onKeyDown(e) {
             switchCamera('mobile'); break;
         case 87: // W
         case 119: // w
-            g_carrinho.position.z -= 1 ? g_carrinho.position.z > -30 : null ;
+            g_carrinho.position.z -= 1 * deltaTime ? g_carrinho.position.z > -30 : null;
             break;
         case 83: // S
         case 115: // s
-            g_carrinho.position.z += 1 ? g_carrinho.position.z < -6 : null;
+            g_carrinho.position.z += 1 * deltaTime ? g_carrinho.position.z < -6 : null;
             break;
         case 37: // Left
-            g_top.rotation.y += Math.PI / 180;
+            g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
             break;
         case 39: // Right
-            g_top.rotation.y -= Math.PI / 180;
+            g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
             break;
         case 38: // Up
             const len = cabo.geometry.parameters.height;
             if (len - 1 < 3) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - 0.2);
-            cabo.position.y += 0.1;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
+            cabo.position.y += (ascensionSpeed/2) * deltaTime;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 40: // Down
             const len2 = cabo.geometry.parameters.height;
             if (len2 + 1 > 50) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + 0.2);
-            cabo.position.y -= 0.1;
+            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
+            cabo.position.y -= (ascensionSpeed/2) * deltaTime;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
         case 82: // R (close claw)
             if (pivot_pinca1.rotation.z > -Math.PI/7) {
-                pivot_pinca1.rotateZ(-Math.PI/180);
-                pivot_pinca2.rotateZ(Math.PI/180);
-                pivot_pinca3.rotateX(Math.PI/180);
-                pivot_pinca4.rotateX(-Math.PI/180);
+                const rotIncr = (Math.PI/rotSpeed) * deltaTime;
+                pivot_pinca1.rotateZ(-rotIncr);
+                pivot_pinca2.rotateZ(rotIncr);
+                pivot_pinca3.rotateX(rotIncr);
+                pivot_pinca4.rotateX(-rotIncr);
             }
             break;
         case 70: // F (open claw)
             if (pivot_pinca1.rotation.z < Math.PI/6) {
-                pivot_pinca1.rotateZ(Math.PI/180);
-                pivot_pinca2.rotateZ(-Math.PI/180);
-                pivot_pinca3.rotateX(-Math.PI/180);
-                pivot_pinca4.rotateX(Math.PI/180);
+                const rotIncr = (Math.PI/rotSpeed) * deltaTime;
+                pivot_pinca1.rotateZ(rotIncr);
+                pivot_pinca2.rotateZ(-rotIncr);
+                pivot_pinca3.rotateX(-rotIncr);
+                pivot_pinca4.rotateX(rotIncr);
             }
             break;
         case 86: // V, display/hide wireframe
@@ -485,16 +604,11 @@ function onKeyDown(e) {
 ///////////////////////
 /* KEY UP CALLBACK */
 ///////////////////////
-function onKeyUp(e){
+function onKeyUp(e) {
     'use strict';
+    const key = e.key;
+    updateHUD(key, false);
 }
 
 init();
 animate();
-
-function setCamera(camera, x, y, z, xLook, yLook, zLook) {
-    camera.position.x = x;
-    camera.position.y = y;
-    camera.position.z = z;
-    camera.lookAt(xLook, yLook, zLook);
-}
