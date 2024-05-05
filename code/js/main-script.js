@@ -15,7 +15,7 @@ var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
 var wireframe = false;
 var clock = new THREE.Clock(), deltaTime;
-const rotSpeed = 1, ascensionSpeed = 20; // TODO change to 180 and 0.2 or idk
+const rotSpeed = 1, ascensionSpeed = 20, cartSpeed = 16; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
@@ -75,7 +75,6 @@ function switchCamera(cameraType) {
     switch(cameraType) {
         case 'frontal': // 1
             // aligned with the z-axis
-            console.log(camera1.isCamera);
             camera = camera1;
             break;
         case 'lateral': // 2
@@ -87,15 +86,12 @@ function switchCamera(cameraType) {
             camera = camera3;
             break;
         case 'ortographic': // 4
-            console.log('Orthographic Camera');
             camera = camera4;
             break;
         case 'perspective': // 5
-            console.log('Perspective Camera');
             camera = camera5;
             break;
         case 'mobile': // 6
-            console.log('Mobile Camera');
             camera = camera6;
             break;
 
@@ -586,11 +582,11 @@ function onKeyDown(e) {
             switchCamera('mobile'); break;
         case 87: // W
         case 119: // w
-            g_carrinho.position.z -= 1 * deltaTime ? g_carrinho.position.z > -30 : null;
+            g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
             break;
         case 83: // S
         case 115: // s
-            g_carrinho.position.z += 1 * deltaTime ? g_carrinho.position.z < -6 : null;
+            g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
             break;
         case 37: // Left
             g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
@@ -631,7 +627,6 @@ function onKeyDown(e) {
             }
             break;
         case 86: // V, display/hide wireframe
-            console.log("V pressed")
             scene.traverse(function (node) {
                 if (node instanceof THREE.Mesh) {
                     node.material.wireframe = !node.material.wireframe;
