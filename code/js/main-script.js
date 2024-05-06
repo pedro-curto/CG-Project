@@ -308,6 +308,7 @@ function createHUD() {
         '4': 'Orthographic Camera',
         '5': 'Perspective Camera',
         '6': 'Mobile Camera',
+        '7': 'Toggle Wireframe',
         'W': 'Move Forward',
         'S': 'Move Backward',
         'ArrowLeft': 'Rotate Left',
@@ -315,8 +316,7 @@ function createHUD() {
         'ArrowUp': 'Raise Cargo',
         'ArrowDown': 'Lower Cargo',
         'R': 'Close Claw',
-        'F': 'Open Claw',
-        'V': 'Toggle Wireframe'
+        'F': 'Open Claw'
     };
     
     Object.keys(keys).forEach(key => {
@@ -425,11 +425,22 @@ function createCargos() {
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
+function spheresIntersect(sphere1, sphere2) {
+    'use strict';
+    var xDist = (sphere1.center.x - sphere2.center.x)**2;
+    var yDist = (sphere1.center.y - sphere2.center.y)**2;
+    var zDist = (sphere1.center.z - sphere2.center.z)**2;
+    var distance = xDist + yDist + zDist;
+    var radiusSums = (sphere1.radius + sphere2.radius)**2;
+    return radiusSums >= distance;
+}
+
+
 function existsCollisions(obj) {
     'use strict';
-    if (obj.intersectsSphere(BB_container)) return true;
+    if (spheresIntersect(obj, BB_container)) return true;
     for (let i = 0; i < objects.length; i++) {
-        if (obj.intersectsSphere(objects[i])) {
+        if (spheresIntersect(obj, objects[i])) {
             return true;
         }
     }
@@ -439,7 +450,7 @@ function existsCollisions(obj) {
 function checkColisions() {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
-        if (BB_garra.intersectsSphere(objects[i])) {
+        if (spheresIntersect(BB_garra, objects[i])) {
             if (isClawHoldingObject) return;
             isClawHoldingObject = true;
             index = i;
@@ -497,7 +508,7 @@ function handleAnimation(){
 }
 
 function startAnimation() {
-    handleAnimation()
+    handleAnimation();
 
     if (!onGoing) return;
 
@@ -628,20 +639,27 @@ function onKeyDown(e) {
             switchCamera('ortographic'); break;
         case 53: // 5
             switchCamera('perspective'); break;
-        case 54: // 6
+            case 54: // 6
             switchCamera('mobile'); break;
-        case 87: // W
-        case 119: // w
+            case 55: // 7, display/hide wireframe
+                scene.traverse(function (node) {
+                    if (node instanceof THREE.Mesh) {
+                        node.material.wireframe = !node.material.wireframe;
+                    }
+                });
+                break;
+            case 87: // W
+            case 119: // w
             g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
             break;
-        case 83: // S
-        case 115: // s
+            case 83: // S
+            case 115: // s
             g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
             break;
-        case 37: // Left
+            case 37: // Left
             g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
             break;
-        case 39: // Right
+            case 39: // Right
             g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
             break;
         case 38: // Up
@@ -675,13 +693,6 @@ function onKeyDown(e) {
                 pivot_pinca3.rotateX(-rotIncr);
                 pivot_pinca4.rotateX(rotIncr);
             }
-            break;
-        case 86: // V, display/hide wireframe
-            scene.traverse(function (node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-            });
             break;
     }
 }
