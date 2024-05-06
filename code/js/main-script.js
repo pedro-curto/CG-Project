@@ -22,7 +22,7 @@ var tirante_frente, tirante_tras;
 var objects = [];
 //var cargo1, cargo2, cargo3, cargo4, cargo5, cargo6;
 var cargos = [];
-var onGoing = false, index, animation_phase = 0, z_cargo_final;
+var onGoing = false, index, animation_phase = 0, z_cargo_final, isClawHoldingObject = false;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -440,6 +440,8 @@ function checkColisions() {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
         if (BB_garra.intersectsSphere(objects[i])) {
+            if (isClawHoldingObject) return;
+            isClawHoldingObject = true;
             index = i;
             let claw_position = g_garra.getWorldPosition(new THREE.Vector3());
             cargos[index].position.set(claw_position.x, claw_position.y - 1.5, claw_position.z);
@@ -489,6 +491,7 @@ function handleAnimation(){
         if (g_garra.position.y > -25){
             onGoing = false;
             animation_phase = 0;
+            isClawHoldingObject = false;
         }
     }
 }
