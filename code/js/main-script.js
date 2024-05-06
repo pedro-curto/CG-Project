@@ -30,7 +30,7 @@ var onGoing = false, index, animation_phase = 0, z_cargo_final, isClawHoldingObj
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xd3d3d3);
+    scene.background = new THREE.Color(0x87ceeb);
     scene.add(new THREE.AxesHelper(10));
 
     createBottomSection();
