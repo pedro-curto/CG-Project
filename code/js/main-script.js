@@ -22,7 +22,7 @@ var tirante_frente, tirante_tras;
 var objects = [];
 //var cargo1, cargo2, cargo3, cargo4, cargo5, cargo6;
 var cargos = [];
-var onGoing = false, index, animation_phase = 0;
+var onGoing = false, index, animation_phase = 0, z_cargo_final;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -357,24 +357,9 @@ function createContainer() {
     container.add(container_base);
     container.position.set(0, 0, -20);
     scene.add(container);
-    console.log(container.position);
+    
     BB_container = new THREE.Sphere(container.position, 5);
 }
-//     var container_walls = new THREE.Mesh(new THREE.CylinderGeometry(15, 10, 5, 4, 5, true), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-//     container_walls.rotateY(Math.PI/4);
-//     container_walls.position.set(-15, 2.5, -15);
-//     container_walls.castShadow = true;
-//     var container_base = new THREE.Mesh(new THREE.PlaneGeometry(Math.sqrt(200), Math.sqrt(200)), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-
-//     container_base.position.set(-15, 0.1, -15);
-//     container.add(container_walls);
-//     container.add(container_base);
-//     scene.add(container);
-//     console.log(container);
-
-//     BB_container = new THREE.Sphere(container_walls.position, 15);
-//     console.log(BB_container);
-// }
 
 function generatePosition(obj) {
     let objBox = new THREE.Box3();
@@ -402,7 +387,7 @@ function generatePosition(obj) {
 
 function createCargos() {
     for (let i = 0; i<20; i++){
-        //let cargos = new THREE.Object3D();
+        // creates the cargos
         var cargo1 = createMesh(new THREE.BoxGeometry(2, 1, 1), 0x0ffff0);
         var cargo2 = createMesh(new THREE.BoxGeometry(1, 2, 1), 0x0ffff0);
         var cargo3 = createMesh(new THREE.DodecahedronGeometry(1.2), 0x0ffff0);
@@ -411,14 +396,13 @@ function createCargos() {
         var cargo6 = createMesh(new THREE.TorusKnotGeometry(0.8,0.3), 0x0ffff0);
 
         // randomly rotates the cargos
-        cargo1.rotation.set(0, Math.random()*Math.PI, 0);
-        cargo2.rotation.set(0, Math.random()*Math.PI, 0);
-        cargo3.rotation.set(0, Math.random()*Math.PI, 0);
-        cargo4.rotation.set(0, Math.random()*Math.PI, 0);
-        cargo5.rotation.set(0, Math.random()*Math.PI, 0);
-        cargo6.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo1.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo2.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo3.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo4.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo5.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo6.rotation.set(0, Math.random()*Math.PI*2, 0);
     
-
         // randomly scatters the cargos
         generatePosition(cargo1);
         generatePosition(cargo2);
@@ -427,6 +411,7 @@ function createCargos() {
         generatePosition(cargo5);
         generatePosition(cargo6);
 
+        // adds the cargos to the scene
         scene.add(cargo1);
         scene.add(cargo2);
         scene.add(cargo3);
@@ -455,9 +440,11 @@ function checkColisions() {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
         if (BB_garra.intersectsSphere(objects[i])) {
-            console.log("colisao: " + i);
             index = i;
+            let claw_position = g_garra.getWorldPosition(new THREE.Vector3());
+            cargos[index].position.set(claw_position.x, claw_position.y - 1.5, claw_position.z);
             g_garra.attach(cargos[index]);
+            z_cargo_final = Math.random() * 8 - 24;
             onGoing = true;
         }
     }
@@ -469,29 +456,35 @@ function betterMod(n, m) {
 }
 
 function handleAnimation(){
-    console.log(g_garra.position.y)
-    if (animation_phase == 0 && g_garra.position.y > -20) animation_phase = 1;
+    if (animation_phase == 0 && g_garra.position.y > -25) animation_phase = 1;
     if (animation_phase == 1){
-        let isNotInContainer = betterMod(g_top.rotation.y, 2*Math.PI) > betterMod(Math.PI/4 + (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI) || betterMod(g_top.rotation.y, 2*Math.PI) < betterMod(Math.PI/4 - (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI);
-        let isInContainer = !isNotInContainer;
-        if (isInContainer) animation_phase = 2;
+        let isInPosition = (g_top.rotation.y % 2*Math.PI > -0.5 && g_top.rotation.y % 2*Math.PI < 0.5);
+        if (isInPosition) {
+            g_top.rotation.y = 0;
+            animation_phase = 2;
+        }
     }
     if (animation_phase == 2){
+        if (g_carrinho.position.z > z_cargo_final - 0.1 && g_carrinho.position.z < z_cargo_final + 0.1){
+            animation_phase = 3;
+        }
+    }
+    if (animation_phase == 3){
         var globalPosition = new THREE.Vector3();
         var tmp = new THREE.Box3().setFromObject(cargos[index]);
         var height = tmp.max.y - tmp.min.y;
         cargos[index].getWorldPosition(globalPosition);
-        let aa = globalPosition.y < height/2 + (ascensionSpeed/2) * deltaTime
+        let isOnGround = globalPosition.y < height/2 + (ascensionSpeed/2) * deltaTime
         
-        if (aa){
+        if (isOnGround){
             scene.attach(cargos[index]);
             objects.splice(index,1);
             cargos.splice(index,1);
-            animation_phase = 3;
+            animation_phase = 4;
         } 
     }
-    if (animation_phase == 3){
-        if (g_garra.position.y > -20){
+    if (animation_phase == 4){
+        if (g_garra.position.y > -25){
             onGoing = false;
             animation_phase = 0;
         }
@@ -505,29 +498,32 @@ function startAnimation() {
 
     if (animation_phase == 0) moveUp();
 
-    if (animation_phase == 1) rotatePlus();
+    if (animation_phase == 1) rotate();
 
-    if (animation_phase == 2) moveDown();
+    if (animation_phase == 2) moveCart();
 
-    if (animation_phase == 3) moveUp();
+    if (animation_phase == 3) moveDown();
+
+    if (animation_phase == 4) moveUp();
 
 }
 
-function rotatePlus() {
-    g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime;
+function rotate() {
+    if (g_top.rotation.y % Math.PI >= 0) g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
+    else g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime;
+}
+
+function moveCart() {
+    g_carrinho.position.z += g_carrinho.position.z < z_cargo_final ? cartSpeed * deltaTime : -cartSpeed * deltaTime;
 }
 
 function moveUp() {
-    const len = cabo.geometry.parameters.height;
-    if (len - 1 < 3) return;
     cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
     cabo.position.y += (ascensionSpeed/2) * deltaTime;
     g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
 }
 
 function moveDown() {
-    const len2 = cabo.geometry.parameters.height;
-    if (len2 + 1 > 50) return;
     cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
     cabo.position.y -= (ascensionSpeed/2) * deltaTime;
     g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
@@ -590,7 +586,7 @@ function animate() {
 
     if (onGoing) startAnimation();
     else checkColisions();
-
+    
     render();
     requestAnimationFrame(animate);
 }
