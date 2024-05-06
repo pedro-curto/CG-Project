@@ -13,20 +13,25 @@ var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra, BB_container;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
-var wireframe = true;
+var wireframe = false;
 var clock = new THREE.Clock(), deltaTime;
-const rotSpeed = 1, ascensionSpeed = 20; // TODO change to 180 and 0.2 or idk
+const rotSpeed = 1, ascensionSpeed = 20, cartSpeed = 16; // TODO change to 180 and 0.2 or idk
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
 var objects = [];
+//var cargo1, cargo2, cargo3, cargo4, cargo5, cargo6;
+var cargos = [];
+var onGoing = false, index, animation_phase = 0, z_cargo_final, isClawHoldingObject = false;
+
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xd3d3d3);
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.add(new THREE.AxesHelper(10));
 
     createBottomSection();
     createTopSection();
@@ -71,7 +76,6 @@ function switchCamera(cameraType) {
     switch(cameraType) {
         case 'frontal': // 1
             // aligned with the z-axis
-            console.log(camera1.isCamera);
             camera = camera1;
             break;
         case 'lateral': // 2
@@ -83,15 +87,12 @@ function switchCamera(cameraType) {
             camera = camera3;
             break;
         case 'ortographic': // 4
-            console.log('Orthographic Camera');
             camera = camera4;
             break;
         case 'perspective': // 5
-            console.log('Perspective Camera');
             camera = camera5;
             break;
         case 'mobile': // 6
-            console.log('Mobile Camera');
             camera = camera6;
             break;
 
@@ -266,8 +267,8 @@ function createTopSection() {
 
 function addContainerBase(obj, x, y, z, width, depth) {
     'use strict';
-    var geometry = new THREE.BoxGeometry(width, 1, depth);
-    var mesh = createMesh(geometry, 0x000000);
+    var geometry = new THREE.BoxGeometry(width, 0.1, depth);
+    var mesh = createMesh(geometry, 0x7393B3);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
@@ -276,7 +277,7 @@ function addContainerBase(obj, x, y, z, width, depth) {
 function addContainerWall(obj, x, y, z, width, height, depth) {
     'use strict';
     var geometry = new THREE.BoxGeometry(width, height, depth);
-    var mesh = createMesh(geometry, 0x000000);
+    var mesh = createMesh(geometry, 0x7393B3);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
@@ -307,6 +308,7 @@ function createHUD() {
         '4': 'Orthographic Camera',
         '5': 'Perspective Camera',
         '6': 'Mobile Camera',
+        '7': 'Toggle Wireframe',
         'W': 'Move Forward',
         'S': 'Move Backward',
         'ArrowLeft': 'Rotate Left',
@@ -314,8 +316,7 @@ function createHUD() {
         'ArrowUp': 'Raise Cargo',
         'ArrowDown': 'Lower Cargo',
         'R': 'Close Claw',
-        'F': 'Open Claw',
-        'V': 'Toggle Wireframe'
+        'F': 'Open Claw'
     };
     
     Object.keys(keys).forEach(key => {
@@ -342,81 +343,104 @@ function createContainer() {
     'use strict';
 
     var container = new THREE.Object3D();
-    var container_walls = new THREE.Mesh(new THREE.CylinderGeometry(15, 10, 5, 4, 5, true), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-    container_walls.rotateY(Math.PI/4);
-    container_walls.position.set(-15, 2.5, -15);
-    container_walls.castShadow = true;
-    var container_base = new THREE.Mesh(new THREE.PlaneGeometry(Math.sqrt(200), Math.sqrt(200)), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-    container_base.rotateY(Math.PI/2);
-    container_base.rotateX(-Math.PI/2);
-    container_base.position.set(-15, 0.1, -15);
+    var container_walls = new THREE.Object3D();
+    var container_base = new THREE.Object3D();
+
+    //                               x, y, z, width, height, depth
+    addContainerWall(container_walls, 0, 2.5, 4.9, 5, 5, 0.2);
+    addContainerWall(container_walls, 2.4, 2.5, 0, 0.2, 5, 10);
+    addContainerWall(container_walls, -2.4, 2.5, 0, 0.2, 5, 10);
+    addContainerWall(container_walls, 0, 2.5, -4.9, 5, 5, 0.2);
+    addContainerBase(container_base, 0, 0.1, 0, 5, 10);
+
     container.add(container_walls);
     container.add(container_base);
+    container.position.set(0, 0, -20);
     scene.add(container);
-
-    BB_container = new THREE.Box3().setFromObject(container);
+    
+    BB_container = new THREE.Sphere(container.position, 5);
 }
 
 function generatePosition(obj) {
-
     let objBox = new THREE.Box3();
     objBox.setFromObject(obj);
     let height = objBox.max.y - objBox.min.y;
-    let objBB = new THREE.Sphere(obj.position, height/2);
+    let radius = Math.max(objBox.max.x - objBox.min.x, objBox.max.z - objBox.min.z, height) / 2;
+    let objBB = new THREE.Sphere(obj.position, radius);
 
     let x = 0, z = 0;
     do {
         do {
-            x = Math.random() * 24 + 6;
-            z = Math.random() * 24 + 6;
+            x = Math.random() * 30;
+            z = Math.random() * 30;
         } while (Math.sqrt(x**2+z**2) < 6 || Math.sqrt(x**2+z**2) > 30);
 
         if (Math.random() < 0.5) x *= -1;
         if (Math.random() < 0.5) z *= -1;
 
         obj.position.set(x, height/2, z);
-        objBB.set(obj.position, height/2);
+        objBB.set(obj.position, radius);
 
     } while (existsCollisions(objBB));
     objects.push(objBB);
 }
 
 function createCargos() {
-    let cargos = new THREE.Object3D();
+    for (let i = 0; i<20; i++){
+        // creates the cargos
+        var cargo1 = createMesh(new THREE.BoxGeometry(2, 1, 1), 0x0ffff0);
+        var cargo2 = createMesh(new THREE.BoxGeometry(1, 2, 1), 0x0ffff0);
+        var cargo3 = createMesh(new THREE.DodecahedronGeometry(1.2), 0x0ffff0);
+        var cargo4 = createMesh(new THREE.IcosahedronGeometry(1), 0x0ffff0);
+        var cargo5 = createMesh(new THREE.TorusGeometry(0.7), 0x0ffff0);
+        var cargo6 = createMesh(new THREE.TorusKnotGeometry(0.8,0.3), 0x0ffff0);
 
-    let cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
-    let cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
-    let cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
-    let cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
-    let cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
-    let cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
+        // randomly rotates the cargos
+        cargo1.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo2.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo3.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo4.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo5.rotation.set(0, Math.random()*Math.PI*2, 0);
+        cargo6.rotation.set(0, Math.random()*Math.PI*2, 0);
+    
+        // randomly scatters the cargos
+        generatePosition(cargo1);
+        generatePosition(cargo2);
+        generatePosition(cargo3);
+        generatePosition(cargo4);
+        generatePosition(cargo5);
+        generatePosition(cargo6);
 
-    // randomly scatters the cargos
-
-    generatePosition(cargo1);
-    generatePosition(cargo2);
-    generatePosition(cargo3);
-    generatePosition(cargo4);
-    generatePosition(cargo5);
-    generatePosition(cargo6);
-
-    cargos.add(cargo1);
-    cargos.add(cargo2);
-    cargos.add(cargo3);
-    cargos.add(cargo4);
-    cargos.add(cargo5);
-    cargos.add(cargo6);
-    scene.add(cargos);
+        // adds the cargos to the scene
+        scene.add(cargo1);
+        scene.add(cargo2);
+        scene.add(cargo3);
+        scene.add(cargo4);
+        scene.add(cargo5);
+        scene.add(cargo6);
+        cargos.push(cargo1, cargo2, cargo3, cargo4, cargo5, cargo6);
+    }
 }
 
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
+function spheresIntersect(sphere1, sphere2) {
+    'use strict';
+    var xDist = (sphere1.center.x - sphere2.center.x)**2;
+    var yDist = (sphere1.center.y - sphere2.center.y)**2;
+    var zDist = (sphere1.center.z - sphere2.center.z)**2;
+    var distance = xDist + yDist + zDist;
+    var radiusSums = (sphere1.radius + sphere2.radius)**2;
+    return radiusSums >= distance;
+}
+
+
 function existsCollisions(obj) {
     'use strict';
-    if (obj.intersectsBox(BB_container)) return true;
+    if (spheresIntersect(obj, BB_container)) return true;
     for (let i = 0; i < objects.length; i++) {
-        if (obj.intersectsSphere(objects[i])) {
+        if (spheresIntersect(obj, objects[i])) {
             return true;
         }
     }
@@ -426,12 +450,99 @@ function existsCollisions(obj) {
 function checkColisions() {
     'use strict';
     for (let i = 0; i < objects.length; i++) {
-        if (BB_garra.intersectsSphere(objects[i])) {
-            console.log("colisao: " + i);
-            return true
+        if (spheresIntersect(BB_garra, objects[i])) {
+            if (isClawHoldingObject) return;
+            isClawHoldingObject = true;
+            index = i;
+            let claw_position = g_garra.getWorldPosition(new THREE.Vector3());
+            cargos[index].position.set(claw_position.x, claw_position.y - 1.5, claw_position.z);
+            g_garra.attach(cargos[index]);
+            z_cargo_final = Math.random() * 8 - 24;
+            onGoing = true;
         }
     }
-    return false;
+    // return false;
+}
+
+function betterMod(n, m) {
+    return ((n % m) + m) % m;
+}
+
+function handleAnimation(){
+    if (animation_phase == 0 && g_garra.position.y > -25){
+        animation_phase = 1;
+    }
+    if (animation_phase == 1){
+        let isInPosition = (g_top.rotation.y % Math.PI > -0.1 && g_top.rotation.y % Math.PI < 0.1 && g_top.rotation.y % (2*Math.PI) > -0.1 && g_top.rotation.y % (2*Math.PI) < 0.1);
+        if (isInPosition) {
+            g_top.rotation.y = 0;
+            animation_phase = 2;
+        }
+    }
+    if (animation_phase == 2){
+        if (g_carrinho.position.z > z_cargo_final - 0.1 && g_carrinho.position.z < z_cargo_final + 0.1){
+            animation_phase = 3;
+        }
+    }
+    if (animation_phase == 3){
+        var globalPosition = new THREE.Vector3();
+        var tmp = new THREE.Box3().setFromObject(cargos[index]);
+        var height = tmp.max.y - tmp.min.y;
+        cargos[index].getWorldPosition(globalPosition);
+        let isOnGround = globalPosition.y < height/2 + (ascensionSpeed/2) * deltaTime
+        
+        if (isOnGround){
+            scene.attach(cargos[index]);
+            objects.splice(index,1);
+            cargos.splice(index,1);
+            animation_phase = 4;
+        } 
+    }
+    if (animation_phase == 4){
+        if (g_garra.position.y > -25){
+            onGoing = false;
+            animation_phase = 0;
+            isClawHoldingObject = false;
+        }
+    }
+}
+
+function startAnimation() {
+    handleAnimation();
+
+    if (!onGoing) return;
+
+    if (animation_phase == 0) moveUp();
+
+    if (animation_phase == 1) rotate();
+
+    if (animation_phase == 2) moveCart();
+
+    if (animation_phase == 3) moveDown();
+
+    if (animation_phase == 4) moveUp();
+
+}
+
+function rotate() {
+    if (betterMod(g_top.rotation.y, 2*Math.PI) < Math.PI) g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
+    else g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime;
+}
+
+function moveCart() {
+    g_carrinho.position.z += g_carrinho.position.z < z_cargo_final ? cartSpeed * deltaTime : -cartSpeed * deltaTime;
+}
+
+function moveUp() {
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
+    cabo.position.y += (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+}
+
+function moveDown() {
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
+    cabo.position.y -= (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
 }
 
 ///////////////////////
@@ -489,8 +600,9 @@ function animate() {
 
     BB_garra.set(g_garra.getWorldPosition(new THREE.Vector3()), 1.5);
 
-    checkColisions();
-
+    if (onGoing) startAnimation();
+    else checkColisions();
+    
     render();
     requestAnimationFrame(animate);
 }
@@ -513,6 +625,7 @@ export function onResize() {
 /* KEY DOWN CALLBACK */
 ///////////////////////
 function onKeyDown(e) {
+    if (onGoing) return;
     const key = e.key;
     updateHUD(key, true);
     switch (e.keyCode) {
@@ -526,20 +639,27 @@ function onKeyDown(e) {
             switchCamera('ortographic'); break;
         case 53: // 5
             switchCamera('perspective'); break;
-        case 54: // 6
+            case 54: // 6
             switchCamera('mobile'); break;
-        case 87: // W
-        case 119: // w
-            g_carrinho.position.z -= 1 * deltaTime ? g_carrinho.position.z > -30 : null;
+            case 55: // 7, display/hide wireframe
+                scene.traverse(function (node) {
+                    if (node instanceof THREE.Mesh) {
+                        node.material.wireframe = !node.material.wireframe;
+                    }
+                });
+                break;
+            case 87: // W
+            case 119: // w
+            g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
             break;
-        case 83: // S
-        case 115: // s
-            g_carrinho.position.z += 1 * deltaTime ? g_carrinho.position.z < -6 : null;
+            case 83: // S
+            case 115: // s
+            g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
             break;
-        case 37: // Left
+            case 37: // Left
             g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
             break;
-        case 39: // Right
+            case 39: // Right
             g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
             break;
         case 38: // Up
@@ -573,14 +693,6 @@ function onKeyDown(e) {
                 pivot_pinca3.rotateX(-rotIncr);
                 pivot_pinca4.rotateX(rotIncr);
             }
-            break;
-        case 86: // V, display/hide wireframe
-            console.log("V pressed")
-            scene.traverse(function (node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-            });
             break;
     }
 }
