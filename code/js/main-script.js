@@ -22,7 +22,7 @@ var tirante_frente, tirante_tras;
 var objects = [];
 //var cargo1, cargo2, cargo3, cargo4, cargo5, cargo6;
 var cargos = [];
-var onGoing = false;
+var onGoing = false, index, animation_phase = 0;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -353,29 +353,31 @@ function createContainer() {
     container.add(container_walls);
     container.add(container_base);
     scene.add(container);
+    console.log(container);
 
-    BB_container = new THREE.Box3().setFromObject(container);
+    BB_container = new THREE.Sphere(container_walls.position, 15);
+    console.log(BB_container);
 }
 
 function generatePosition(obj) {
-
     let objBox = new THREE.Box3();
     objBox.setFromObject(obj);
     let height = objBox.max.y - objBox.min.y;
-    let objBB = new THREE.Sphere(obj.position, height/2);
+    let radius = Math.max(objBox.max.x - objBox.min.x, objBox.max.z - objBox.min.z, height) / 2;
+    let objBB = new THREE.Sphere(obj.position, radius);
 
     let x = 0, z = 0;
     do {
         do {
-            x = Math.random() * 24 + 6;
-            z = Math.random() * 24 + 6;
+            x = Math.random() * 30;
+            z = Math.random() * 30;
         } while (Math.sqrt(x**2+z**2) < 6 || Math.sqrt(x**2+z**2) > 30);
 
         if (Math.random() < 0.5) x *= -1;
         if (Math.random() < 0.5) z *= -1;
 
         obj.position.set(x, height/2, z);
-        objBB.set(obj.position, height/2);
+        objBB.set(obj.position, radius);
 
     } while (existsCollisions(objBB));
     objects.push(objBB);
@@ -383,13 +385,23 @@ function generatePosition(obj) {
 
 function createCargos() {
     //let cargos = new THREE.Object3D();
-
     var cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
     var cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
     var cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
     var cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
     var cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
     var cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
+
+    // for (let i = 0; i<20; i++){
+    //     var cargo7 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
+    //     var cargo8 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
+    //     generatePosition(cargo7);
+    //     generatePosition(cargo8);
+    //     scene.add(cargo7);
+    //     scene.add(cargo8);
+    //     cargos.push(cargo7);
+    //     cargos.push(cargo8);
+    // }
 
     // randomly scatters the cargos
 
@@ -415,7 +427,7 @@ function createCargos() {
 //////////////////////
 function existsCollisions(obj) {
     'use strict';
-    if (obj.intersectsBox(BB_container)) return true;
+    if (obj.intersectsSphere(BB_container)) return true;
     for (let i = 0; i < objects.length; i++) {
         if (obj.intersectsSphere(objects[i])) {
             return true;
@@ -429,7 +441,9 @@ function checkColisions() {
     for (let i = 0; i < objects.length; i++) {
         if (BB_garra.intersectsSphere(objects[i])) {
             console.log("colisao: " + i);
-            startAnimation(i);
+            index = i;
+            g_garra.attach(cargos[index]);
+            onGoing = true;
         }
     }
     // return false;
@@ -438,31 +452,50 @@ function checkColisions() {
 function betterMod(n, m) {
     return ((n % m) + m) % m;
 }
-function startAnimation(index) {
-    onGoing = true;
-    g_garra.attach(cargos[index]);
 
-    while (g_garra.position.y < -10) moveUp();
-
-    while (betterMod(g_top.rotation.y, 2*Math.PI) > betterMod(Math.PI/4 + (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI) || betterMod(g_top.rotation.y, 2*Math.PI) < betterMod(Math.PI/4 - (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI)) {
-        rotatePlus();
+function handleAnimation(){
+    console.log(g_garra.position.y)
+    if (animation_phase == 0 && g_garra.position.y > -20) animation_phase = 1;
+    if (animation_phase == 1){
+        let isNotInContainer = betterMod(g_top.rotation.y, 2*Math.PI) > betterMod(Math.PI/4 + (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI) || betterMod(g_top.rotation.y, 2*Math.PI) < betterMod(Math.PI/4 - (Math.PI / rotSpeed * deltaTime)/2, 2*Math.PI);
+        let isInContainer = !isNotInContainer;
+        if (isInContainer) animation_phase = 2;
     }
-
-    var globalPosition = new THREE.Vector3();
-    var tmp = new THREE.Box3().setFromObject(cargos[index]);
-    var height = tmp.max.y - tmp.min.y;
-    cargos[index].getWorldPosition(globalPosition);
-
-    while (globalPosition.y > height/2 + (ascensionSpeed/2) * deltaTime) {
-        moveDown();
+    if (animation_phase == 2){
+        var globalPosition = new THREE.Vector3();
+        var tmp = new THREE.Box3().setFromObject(cargos[index]);
+        var height = tmp.max.y - tmp.min.y;
         cargos[index].getWorldPosition(globalPosition);
+        let aa = globalPosition.y < height/2 + (ascensionSpeed/2) * deltaTime
+        
+        if (aa){
+            scene.attach(cargos[index]);
+            objects.splice(index,1);
+            cargos.splice(index,1);
+            animation_phase = 3;
+        } 
     }
+    if (animation_phase == 3){
+        if (g_garra.position.y > -20){
+            onGoing = false;
+            animation_phase = 0;
+        }
+    }
+}
 
-    scene.attach(cargos[index]);
+function startAnimation() {
+    handleAnimation()
 
-    console.log((180*g_top.rotation.y/Math.PI) % 360);
+    if (!onGoing) return;
 
-    onGoing = false;
+    if (animation_phase == 0) moveUp();
+
+    if (animation_phase == 1) rotatePlus();
+
+    if (animation_phase == 2) moveDown();
+
+    if (animation_phase == 3) moveUp();
+
 }
 
 function rotatePlus() {
@@ -540,7 +573,8 @@ function animate() {
 
     BB_garra.set(g_garra.getWorldPosition(new THREE.Vector3()), 1.5);
 
-    checkColisions();
+    if (onGoing) startAnimation();
+    else checkColisions();
 
     render();
     requestAnimationFrame(animate);
