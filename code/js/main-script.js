@@ -456,9 +456,11 @@ function betterMod(n, m) {
 }
 
 function handleAnimation(){
-    if (animation_phase == 0 && g_garra.position.y > -25) animation_phase = 1;
+    if (animation_phase == 0 && g_garra.position.y > -25){
+        animation_phase = 1;
+    }
     if (animation_phase == 1){
-        let isInPosition = (g_top.rotation.y % 2*Math.PI > -0.5 && g_top.rotation.y % 2*Math.PI < 0.5);
+        let isInPosition = (g_top.rotation.y % Math.PI > -0.1 && g_top.rotation.y % Math.PI < 0.1 && g_top.rotation.y % (2*Math.PI) > -0.1 && g_top.rotation.y % (2*Math.PI) < 0.1);
         if (isInPosition) {
             g_top.rotation.y = 0;
             animation_phase = 2;
