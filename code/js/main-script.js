@@ -514,7 +514,7 @@ function startAnimation() {
 }
 
 function rotate() {
-    if (g_top.rotation.y % Math.PI >= 0) g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
+    if (betterMod(g_top.rotation.y, 2*Math.PI) < Math.PI) g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
     else g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime;
 }
 
