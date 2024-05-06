@@ -31,6 +31,7 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xd3d3d3);
+    scene.add(new THREE.AxesHelper(10));
 
     createBottomSection();
     createTopSection();
@@ -67,7 +68,7 @@ function createCamera() {
     camera6.position.set(0, -0.1, 0); // avoids the camera to be inside the object
     g_garra.add(camera6);
 
-    camera = camera5; // set default camera
+    camera = camera6; // set default camera
 }
 
 function switchCamera(cameraType) {
@@ -266,8 +267,8 @@ function createTopSection() {
 
 function addContainerBase(obj, x, y, z, width, depth) {
     'use strict';
-    var geometry = new THREE.BoxGeometry(width, 1, depth);
-    var mesh = createMesh(geometry, 0x000000);
+    var geometry = new THREE.BoxGeometry(width, 0.1, depth);
+    var mesh = createMesh(geometry, 0x7393B3);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
@@ -276,7 +277,7 @@ function addContainerBase(obj, x, y, z, width, depth) {
 function addContainerWall(obj, x, y, z, width, height, depth) {
     'use strict';
     var geometry = new THREE.BoxGeometry(width, height, depth);
-    var mesh = createMesh(geometry, 0x000000);
+    var mesh = createMesh(geometry, 0x7393B3);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
@@ -342,22 +343,38 @@ function createContainer() {
     'use strict';
 
     var container = new THREE.Object3D();
-    var container_walls = new THREE.Mesh(new THREE.CylinderGeometry(15, 10, 5, 4, 5, true), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-    container_walls.rotateY(Math.PI/4);
-    container_walls.position.set(-15, 2.5, -15);
-    container_walls.castShadow = true;
-    var container_base = new THREE.Mesh(new THREE.PlaneGeometry(Math.sqrt(200), Math.sqrt(200)), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
-    container_base.rotateY(Math.PI/2);
-    container_base.rotateX(-Math.PI/2);
-    container_base.position.set(-15, 0.1, -15);
+    var container_walls = new THREE.Object3D();
+    var container_base = new THREE.Object3D();
+
+    //                               x, y, z, width, height, depth
+    addContainerWall(container_walls, 0, 2.5, 4.9, 5, 5, 0.2);
+    addContainerWall(container_walls, 2.4, 2.5, 0, 0.2, 5, 10);
+    addContainerWall(container_walls, -2.4, 2.5, 0, 0.2, 5, 10);
+    addContainerWall(container_walls, 0, 2.5, -4.9, 5, 5, 0.2);
+    addContainerBase(container_base, 0, 0.1, 0, 5, 10);
+
     container.add(container_walls);
     container.add(container_base);
+    container.position.set(0, 0, -20);
     scene.add(container);
-    console.log(container);
-
-    BB_container = new THREE.Sphere(container_walls.position, 15);
-    console.log(BB_container);
+    console.log(container.position);
+    BB_container = new THREE.Sphere(container.position, 5);
 }
+//     var container_walls = new THREE.Mesh(new THREE.CylinderGeometry(15, 10, 5, 4, 5, true), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
+//     container_walls.rotateY(Math.PI/4);
+//     container_walls.position.set(-15, 2.5, -15);
+//     container_walls.castShadow = true;
+//     var container_base = new THREE.Mesh(new THREE.PlaneGeometry(Math.sqrt(200), Math.sqrt(200)), new THREE.MeshPhongMaterial({ color: 0x7393B3, side: THREE.DoubleSide, wireframe: wireframe}));
+
+//     container_base.position.set(-15, 0.1, -15);
+//     container.add(container_walls);
+//     container.add(container_base);
+//     scene.add(container);
+//     console.log(container);
+
+//     BB_container = new THREE.Sphere(container_walls.position, 15);
+//     console.log(BB_container);
+// }
 
 function generatePosition(obj) {
     let objBox = new THREE.Box3();
@@ -384,42 +401,40 @@ function generatePosition(obj) {
 }
 
 function createCargos() {
-    //let cargos = new THREE.Object3D();
-    var cargo1 = createMesh(new THREE.BoxGeometry(2, 2, 2), 0x0ffff0);
-    var cargo2 = createMesh(new THREE.BoxGeometry(3, 5, 7), 0x0ffff0);
-    var cargo3 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
-    var cargo4 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
-    var cargo5 = createMesh(new THREE.TorusGeometry(2), 0x0ffff0);
-    var cargo6 = createMesh(new THREE.TorusKnotGeometry(2), 0x0ffff0);
+    for (let i = 0; i<20; i++){
+        //let cargos = new THREE.Object3D();
+        var cargo1 = createMesh(new THREE.BoxGeometry(2, 1, 1), 0x0ffff0);
+        var cargo2 = createMesh(new THREE.BoxGeometry(1, 2, 1), 0x0ffff0);
+        var cargo3 = createMesh(new THREE.DodecahedronGeometry(1.2), 0x0ffff0);
+        var cargo4 = createMesh(new THREE.IcosahedronGeometry(1), 0x0ffff0);
+        var cargo5 = createMesh(new THREE.TorusGeometry(0.7), 0x0ffff0);
+        var cargo6 = createMesh(new THREE.TorusKnotGeometry(0.8,0.3), 0x0ffff0);
 
-    // for (let i = 0; i<20; i++){
-    //     var cargo7 = createMesh(new THREE.DodecahedronGeometry(3), 0x0ffff0);
-    //     var cargo8 = createMesh(new THREE.IcosahedronGeometry(2), 0x0ffff0);
-    //     generatePosition(cargo7);
-    //     generatePosition(cargo8);
-    //     scene.add(cargo7);
-    //     scene.add(cargo8);
-    //     cargos.push(cargo7);
-    //     cargos.push(cargo8);
-    // }
+        // randomly rotates the cargos
+        cargo1.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo2.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo3.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo4.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo5.rotation.set(0, Math.random()*Math.PI, 0);
+        cargo6.rotation.set(0, Math.random()*Math.PI, 0);
+    
 
-    // randomly scatters the cargos
+        // randomly scatters the cargos
+        generatePosition(cargo1);
+        generatePosition(cargo2);
+        generatePosition(cargo3);
+        generatePosition(cargo4);
+        generatePosition(cargo5);
+        generatePosition(cargo6);
 
-    generatePosition(cargo1);
-    generatePosition(cargo2);
-    generatePosition(cargo3);
-    generatePosition(cargo4);
-    generatePosition(cargo5);
-    generatePosition(cargo6);
-
-    scene.add(cargo1);
-    scene.add(cargo2);
-    scene.add(cargo3);
-    scene.add(cargo4);
-    scene.add(cargo5);
-    scene.add(cargo6);
-    cargos.push(cargo1, cargo2, cargo3, cargo4, cargo5, cargo6);
-    // scene.add(cargos);
+        scene.add(cargo1);
+        scene.add(cargo2);
+        scene.add(cargo3);
+        scene.add(cargo4);
+        scene.add(cargo5);
+        scene.add(cargo6);
+        cargos.push(cargo1, cargo2, cargo3, cargo4, cargo5, cargo6);
+    }
 }
 
 //////////////////////
