@@ -311,10 +311,10 @@ function createHUD() {
         '7': 'Toggle Wireframe',
         'W': 'Move Forward',
         'S': 'Move Backward',
-        'ArrowLeft': 'Rotate Left',
-        'ArrowRight': 'Rotate Right',
-        'ArrowUp': 'Raise Cargo',
-        'ArrowDown': 'Lower Cargo',
+        'Q': 'Rotate Upper Section Counter Clockwise',
+        'A': 'Rotate Upper Section Clockwise',
+        'E': 'Raise Claw',
+        'D': 'Lower Claw',
         'R': 'Close Claw',
         'F': 'Open Claw'
     };
@@ -639,37 +639,41 @@ function onKeyDown(e) {
             switchCamera('ortographic'); break;
         case 53: // 5
             switchCamera('perspective'); break;
-            case 54: // 6
+        case 54: // 6
             switchCamera('mobile'); break;
-            case 55: // 7, display/hide wireframe
-                scene.traverse(function (node) {
-                    if (node instanceof THREE.Mesh) {
-                        node.material.wireframe = !node.material.wireframe;
-                    }
-                });
-                break;
-            case 87: // W
-            case 119: // w
-            g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
+        case 55: // 7, display/hide wireframe
+            scene.traverse(function (node) {
+                if (node instanceof THREE.Mesh) {
+                    node.material.wireframe = !node.material.wireframe;
+                }
+            });
             break;
-            case 83: // S
-            case 115: // s
-            g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
-            break;
-            case 37: // Left
-            g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
-            break;
-            case 39: // Right
-            g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
-            break;
-        case 38: // Up
+        case 87: // W
+        case 119: // w
+        g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
+        break;
+        case 83: // S
+        case 115: // s
+        g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
+        break;
+        case 81:
+        case 113: // Q (rotate left)
+        g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
+        break;
+        case 65:
+        case 97: // A (rotate right)
+        g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
+        break;
+        case 69:
+        case 101: // E (move claw up)
             const len = cabo.geometry.parameters.height;
             if (len - 1 < 3) break;
             cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
             cabo.position.y += (ascensionSpeed/2) * deltaTime;
             g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
             break;
-        case 40: // Down
+        case 68:
+        case 100: // D (move claw down)
             const len2 = cabo.geometry.parameters.height;
             if (len2 + 1 > 50) break;
             cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
