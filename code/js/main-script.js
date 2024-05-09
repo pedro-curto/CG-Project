@@ -393,7 +393,7 @@ function generatePosition(obj) {
         do {
             x = Math.random() * 30;
             z = Math.random() * 30;
-        } while (Math.sqrt(x**2+z**2) < 6 || Math.sqrt(x**2+z**2) > 30);
+        } while ((x**2+z**2) < 36 || (x**2+z**2) > 900);
 
         if (Math.random() < 0.5) x *= -1;
         if (Math.random() < 0.5) z *= -1;
