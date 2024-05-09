@@ -13,9 +13,9 @@ var g_peso, contra_peso1, contra_peso2, contra_peso3, contra_peso4;
 var g_garra, g_carrinho, carrinho, cabo, garra, pinca1, pinca2, pinca3, pinca4, BB_garra, BB_container;
 var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
-var wireframe = false;
+var wireframe = false, items = [];
 var clock = new THREE.Clock(), deltaTime;
-const rotSpeed = 2.5, ascensionSpeed = 10, cartSpeed = 8, clawSpeed = 5; // TODO change to 180 and 0.2 or idk
+const rotSpeed = 3, ascensionSpeed = 10, cartSpeed = 6, clawSpeed = 8; // adjust parameters if needed
 
 var pressedKeys = {};
 
@@ -61,6 +61,7 @@ function createScene() {
     createCargos();
     createGroundPlane();
     createHUD();
+    console.log(items, items.size);
 }
 
 //////////////////////
@@ -152,6 +153,7 @@ function createMesh(geometry, color) {
     var mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    items.push(mesh);
     return mesh;
 }
 
@@ -593,11 +595,10 @@ function keyFourDown() { switchCamera('ortographic'); }
 function keyFiveDown() { switchCamera('perspective'); }
 function keySixDown() { switchCamera('mobile'); }
 function keySevenDown() {
-    scene.traverse(function (node) {
-        if (node instanceof THREE.Mesh) {
-            node.material.wireframe = !node.material.wireframe;
-        }
-    });
+    for (var i = 0; i < items.length; i++) {
+        items[i].material.wireframe = !items[i].material.wireframe;
+    }
+    delete pressedKeys['7'];
 }
 
 function keyWDown() { g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0; }
