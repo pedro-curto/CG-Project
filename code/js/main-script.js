@@ -290,7 +290,7 @@ function createTopSection() {
 
 function addContainerBase(obj, x, y, z, width, depth) {
     'use strict';
-    var geometry = new THREE.BoxGeometry(width, 0.1, depth);
+    var geometry = new THREE.BoxGeometry(width, 0.2, depth);
     var mesh = createMesh(geometry, 0x7393B3);
     mesh.position.set(x, y, z);
     obj.add(mesh);
@@ -374,7 +374,7 @@ function createContainer() {
     addContainerWall(container_walls, 2.4, 2.5, 0, 0.2, 5, 10);
     addContainerWall(container_walls, -2.4, 2.5, 0, 0.2, 5, 10);
     addContainerWall(container_walls, 0, 2.5, -4.9, 5, 5, 0.2);
-    addContainerBase(container_base, 0, 0.1, 0, 5, 10);
+    addContainerBase(container_base, 0, 0, 0, 5, 10);
 
     container.add(container_walls);
     container.add(container_base);
@@ -409,7 +409,8 @@ function generatePosition(obj) {
 }
 
 function createCargos() {
-    for (let i = 0; i<20; i++){
+    let n_cargos = Math.random() * 30 + 1;
+    for (let i = 0; i < n_cargos; i++){
         // creates the cargos
         var cargo1 = createMesh(new THREE.BoxGeometry(2, 1, 1), 0x0ffff0);
         var cargo2 = createMesh(new THREE.BoxGeometry(1, 2, 1), 0x0ffff0);
