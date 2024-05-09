@@ -15,7 +15,27 @@ var pivot_pinca1, pivot_pinca2, pivot_pinca3, pivot_pinca4;
 var keyToElement = new Map();
 var wireframe = false;
 var clock = new THREE.Clock(), deltaTime;
-const rotSpeed = 1, ascensionSpeed = 20, cartSpeed = 16; // TODO change to 180 and 0.2 or idk
+const rotSpeed = 2.5, ascensionSpeed = 10, cartSpeed = 8, clawSpeed = 5; // TODO change to 180 and 0.2 or idk
+
+var pressedKeys = {};
+
+const keyActions = {
+    '1': keyOneDown,
+    '2': keyTwoDown,
+    '3': keyThreeDown,
+    '4': keyFourDown,
+    '5': keyFiveDown,
+    '6': keySixDown,
+    '7': keySevenDown,
+    'W': keyWDown,
+    'S': keySDown,
+    'Q': keyQDown,
+    'A': keyADown,
+    'E': keyEDown,
+    'D': keyDDown,
+    'R': keyRDown,
+    'F': keyFDown
+};
 
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var tirante_frente, tirante_tras;
@@ -558,7 +578,67 @@ function handleCollisions(){
 ////////////
 function update() {
     'use strict';
+    for (const key in pressedKeys) {
+        keyActions[key]();
+    }
 
+
+}
+
+function keyOneDown() { switchCamera('frontal'); }
+function keyTwoDown() { switchCamera('lateral'); }
+function keyThreeDown() { switchCamera('top'); }
+function keyFourDown() { switchCamera('ortographic'); }
+function keyFiveDown() { switchCamera('perspective'); }
+function keySixDown() { switchCamera('mobile'); }
+function keySevenDown() {
+    scene.traverse(function (node) {
+        if (node instanceof THREE.Mesh) {
+            node.material.wireframe = !node.material.wireframe;
+        }
+    });
+}
+
+function keyWDown() { g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0; }
+function keySDown() { g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0; }
+
+function keyQDown() { g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; }
+function keyADown() { g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime; }
+
+function keyEDown() {
+    const len = cabo.geometry.parameters.height;
+    if (len - 1 < 3) return;
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
+    cabo.position.y += (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+}
+
+function keyDDown() {
+    const len2 = cabo.geometry.parameters.height;
+    if (len2 + 1 > 50) return;
+    cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
+    cabo.position.y -= (ascensionSpeed/2) * deltaTime;
+    g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
+}        
+
+function keyRDown() {
+    if (pivot_pinca1.rotation.z > -Math.PI/7) {
+        const rotIncr = (Math.PI/clawSpeed) * deltaTime;
+        pivot_pinca1.rotateZ(-rotIncr);
+        pivot_pinca2.rotateZ(rotIncr);
+        pivot_pinca3.rotateX(rotIncr);
+        pivot_pinca4.rotateX(-rotIncr);
+    }
+}
+
+function keyFDown() {
+    if (pivot_pinca1.rotation.z < Math.PI/6) {
+        const rotIncr = (Math.PI/clawSpeed) * deltaTime;
+        pivot_pinca1.rotateZ(rotIncr);
+        pivot_pinca2.rotateZ(-rotIncr);
+        pivot_pinca3.rotateX(-rotIncr);
+        pivot_pinca4.rotateX(rotIncr);
+    }
 }
 
 /////////////
@@ -602,7 +682,7 @@ function animate() {
 
     if (onGoing) startAnimation();
     else checkColisions();
-    
+    update();
     render();
     requestAnimationFrame(animate);
 }
@@ -626,79 +706,11 @@ export function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     if (onGoing) return;
-    const key = e.key;
+    const key = e.key.toUpperCase();
     updateHUD(key, true);
-    switch (e.keyCode) {
-        case 49: // 1
-            switchCamera('frontal'); break;
-        case 50: // 2
-            switchCamera('lateral'); break;
-        case 51: // 3
-            switchCamera('top'); break;
-        case 52: // 4
-            switchCamera('ortographic'); break;
-        case 53: // 5
-            switchCamera('perspective'); break;
-        case 54: // 6
-            switchCamera('mobile'); break;
-        case 55: // 7, display/hide wireframe
-            scene.traverse(function (node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-            });
-            break;
-        case 87: // W
-        case 119: // w
-        g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0;
-        break;
-        case 83: // S
-        case 115: // s
-        g_carrinho.position.z += g_carrinho.position.z < -6 ? cartSpeed * deltaTime : 0;
-        break;
-        case 81:
-        case 113: // Q (rotate left)
-        g_top.rotation.y += (Math.PI / rotSpeed) * deltaTime; 
-        break;
-        case 65:
-        case 97: // A (rotate right)
-        g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
-        break;
-        case 69:
-        case 101: // E (move claw up)
-            const len = cabo.geometry.parameters.height;
-            if (len - 1 < 3) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height - ascensionSpeed * deltaTime);
-            cabo.position.y += (ascensionSpeed/2) * deltaTime;
-            g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
-            break;
-        case 68:
-        case 100: // D (move claw down)
-            const len2 = cabo.geometry.parameters.height;
-            if (len2 + 1 > 50) break;
-            cabo.geometry = new THREE.CylinderGeometry(0.1, 0.1, cabo.geometry.parameters.height + ascensionSpeed * deltaTime);
-            cabo.position.y -= (ascensionSpeed/2) * deltaTime;
-            g_garra.position.set(0, -cabo.geometry.parameters.height, 0);
-            break;
-        case 82: // R (close claw)
-            if (pivot_pinca1.rotation.z > -Math.PI/7) {
-                const rotIncr = (Math.PI/rotSpeed) * deltaTime;
-                pivot_pinca1.rotateZ(-rotIncr);
-                pivot_pinca2.rotateZ(rotIncr);
-                pivot_pinca3.rotateX(rotIncr);
-                pivot_pinca4.rotateX(-rotIncr);
-            }
-            break;
-        case 70: // F (open claw)
-            if (pivot_pinca1.rotation.z < Math.PI/6) {
-                const rotIncr = (Math.PI/rotSpeed) * deltaTime;
-                pivot_pinca1.rotateZ(rotIncr);
-                pivot_pinca2.rotateZ(-rotIncr);
-                pivot_pinca3.rotateX(-rotIncr);
-                pivot_pinca4.rotateX(rotIncr);
-            }
-            break;
-    }
+    const action = keyActions[key];
+    if (!action) return;
+    pressedKeys[key.toUpperCase()] = action;
 }
 
 ///////////////////////
@@ -706,8 +718,9 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e) {
     'use strict';
-    const key = e.key;
+    const key = e.key.toUpperCase();
     updateHUD(key, false);
+    delete pressedKeys[key];
 }
 
 init();
