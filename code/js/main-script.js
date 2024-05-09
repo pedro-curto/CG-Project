@@ -162,6 +162,7 @@ function createClawMesh(geometry, color) {
     var mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    items.push(mesh);
     return mesh;
 }
 
