@@ -528,6 +528,7 @@ function handleAnimation(){
 }
 
 function startAnimation() {
+    for (const key in pressedKeys) { delete pressedKeys[key]; }
     handleAnimation();
 
     if (!onGoing) return;
