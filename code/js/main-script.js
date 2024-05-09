@@ -491,7 +491,7 @@ function betterMod(n, m) {
     return ((n % m) + m) % m;
 }
 
-function handleAnimation(){
+function handleAnimation() {
     if (animation_phase == 0 && g_garra.position.y > -25){
         animation_phase = 1;
     }
@@ -530,23 +530,6 @@ function handleAnimation(){
     }
 }
 
-function startAnimation() {
-    for (const key in pressedKeys) { delete pressedKeys[key]; }
-    handleAnimation();
-
-    if (!onGoing) return;
-
-    if (animation_phase == 0) moveUp();
-
-    if (animation_phase == 1) rotate();
-
-    if (animation_phase == 2) moveCart();
-
-    if (animation_phase == 3) moveDown();
-
-    if (animation_phase == 4) moveUp();
-
-}
 
 function rotate() {
     if (betterMod(g_top.rotation.y, 2*Math.PI) < Math.PI) g_top.rotation.y -= (Math.PI / rotSpeed) * deltaTime;
@@ -574,7 +557,20 @@ function moveDown() {
 ///////////////////////
 function handleCollisions(){
     'use strict';
+    for (const key in pressedKeys) { delete pressedKeys[key]; }
+    handleAnimation();
 
+    if (!onGoing) return;
+
+    if (animation_phase == 0) moveUp();
+
+    if (animation_phase == 1) rotate();
+
+    if (animation_phase == 2) moveCart();
+
+    if (animation_phase == 3) moveDown();
+
+    if (animation_phase == 4) moveUp();
 }
 
 ////////////
@@ -683,7 +679,7 @@ function animate() {
 
     BB_garra.set(g_garra.getWorldPosition(new THREE.Vector3()), 1.5);
 
-    if (onGoing) startAnimation();
+    if (onGoing) handleCollisions();
     else checkColisions();
     update();
     render();
