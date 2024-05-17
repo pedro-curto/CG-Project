@@ -621,9 +621,6 @@ function init() {
     createCamera();
     createLights();
     
-
-    render();
-
     controls = new OrbitControls(defaultCamera, renderer.domElement);
 
     document.addEventListener('keydown', onKeyDown, false);
