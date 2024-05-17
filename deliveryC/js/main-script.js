@@ -11,12 +11,13 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 //////////////////////
 var renderer, scene, defaultCamera, controls;
 var wireframe = false, items = [];
+var sceneItems = new Map();
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var ring1Group, ring2Group, ring3Group;
 var ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
 var rings = [];
-const ringThickness = 20, ringHeight = 15;
-const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 50;
+const ringThickness = 25, ringHeight = 15;
+const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 25;
 var surfaces = [];
 var clock = new THREE.Clock(), deltaTime;
 const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128;
@@ -24,7 +25,7 @@ var pressedKeys = {};
 var directionalLight, ambientLight;
 var mobiusLightsGroup, spotlightsGroup;
 var defaultMaterial = 2;
-var geometries, materials;
+var geometries, materials; // TODO do the materials still make sense?
 
 const keyActions = {
     '1': keyOneDown,
@@ -33,7 +34,10 @@ const keyActions = {
     'D': keyDDown,
     'P': keyPDown,
     'S': keySDown,
-    'Q': keyQDown
+    'Q': keyQDown,
+    'W': keyWDown,
+    'E': keyEDown,
+    'R': keyRDown
 };
 
 /////////////////////
@@ -48,6 +52,7 @@ function createScene() {
     createSkydome();
     createMobiusStrip();
     console.log(items, items.size);
+    console.log(sceneItems, sceneItems.size);
 }
 
 //////////////////////
@@ -62,27 +67,6 @@ function createCamera() {
     setCamera(camera1, 200, 50, 200, 0, 0, 0);
 
     defaultCamera = camera1; // set default camera
-}
-
-function switchCamera(cameraType) {
-    'use strict';
-    switch(cameraType) {
-        case 'frontal': // 1
-            defaultCamera = camera1;
-            break;
-        case 'lateral': // 2
-            defaultCamera = camera2;
-            break;
-        case 'top': // 3   
-            defaultCamera = camera3;
-            break;
-        case 'ortographic': // 4
-            defaultCamera = camera4;
-            break;
-        case 'perspective': // 5
-            defaultCamera = camera5;
-            break;
-    }
 }
 
 function setCamera(camera, x, y, z, xLook, yLook, zLook) {
@@ -124,19 +108,33 @@ function createObjectLight(object) {
 ////////////////////////
 
 function createMesh(geometry, color) {
-    var material = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
-    var mesh = new THREE.Mesh(geometry, material);
+    var phongMaterial = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
+    var lambertMaterial = new THREE.MeshLambertMaterial({ color: color, wireframe: wireframe });
+    var toonMaterial = new THREE.MeshToonMaterial({ color: color, wireframe: wireframe });
+    var normalMaterial = new THREE.MeshNormalMaterial({ wireframe: wireframe });
+    var mesh = new THREE.Mesh(geometry, phongMaterial);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     items.push(mesh);
+    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
     return mesh;
 }
 
-
-function createBoxObject(x, y, z, width, height, depth, color) {
-    'use strict';
-    var mesh = createMesh(new THREE.BoxGeometry(width, height, depth), color);
-    mesh.position.set(x, y, z);
+function createParamSurfaceMesh(geometry) {
+    var phongMaterial = new THREE.MeshPhongMaterial( { 
+        color: 0xff0000,
+        transparent: true,
+        opacity: 0.6,
+        shininess: 100,
+        specular: 0xffffff,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    var lambertMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
+    var toonMaterial = new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
+    var normalMaterial = new THREE.MeshNormalMaterial( { side: THREE.DoubleSide});
+    var mesh = new THREE.Mesh(geometry, toonMaterial);
+    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
     return mesh;
 }
 
@@ -144,9 +142,8 @@ function createBoxObject(x, y, z, width, height, depth, color) {
 function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
     'use strict';
     // var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);   TODO: fix this
-    var material = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
     var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height);
-    var mesh = new THREE.Mesh(geometry, material);
+    var mesh = createMesh(geometry, color);
     mesh.receiveShadow = true;
     items.push(mesh);
     mesh.position.set(x, y, z);
@@ -258,7 +255,7 @@ function hiperboloide(u, t, target) { // 8
 function initializeArrays() {
     geometries = [cilindroSemBases, cilindroSemBasesNaoCircular, cilindroSemBaseTorto, 
         cone, MeioConeMeioCilindro, coneTorto, planoTorto, hiperboloide];
-
+    // TODO does this still make sense?
     materials = [
         new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide}),
         new THREE.MeshPhongMaterial( { 
@@ -282,7 +279,7 @@ function createObjects(radius, ringGroup) {
     const angle = 2 * Math.PI / n_objects;
     for (let i = 0; i < n_objects; i++) {
         const geometry = new ParametricGeometry(geometries[i], 100, 100);
-        const object = new THREE.Mesh(geometry, materials[defaultMaterial]);
+        const object = createParamSurfaceMesh(geometry);
         object.castShadow = true;
         object.receiveShadow = true;
         object.position.set(
@@ -345,7 +342,7 @@ function createMobiusStrip() {
     mobiusGeometry.computeVertexNormals();
 
     const material = new THREE.MeshPhongMaterial({
-        color: 0x000000,
+        color: 0x4169E1,
         // color: 0xff7700,
         transparent: true,
         opacity: 0.6,
@@ -355,7 +352,7 @@ function createMobiusStrip() {
         depthWrite: false // Importante para transparência
     });
     const mobius = new THREE.Mesh(mobiusGeometry, material);
-    mobius.scale.multiplyScalar(20);
+    mobius.scale.multiplyScalar(25);
     mobius.rotateX(Math.PI/2);
 
     createMobiusLights();
@@ -424,7 +421,7 @@ function createBase() {
 
 function createMainCylinder() {
     'use strict';
-    const color = 0xff0000;
+    const color = 0x8a2be2;
     const main_cylinder = createCylinderObject(0, cylinderHeight/2, 0, cylinderRadius, cylinderRadius, cylinderHeight, color);
     scene.add(main_cylinder);
 }
@@ -448,10 +445,10 @@ function createRing(outerRadius, innerRadius, height, color) {
     return ring;
 }
 
-
 function createRings() {
     const numRings = 3;
-    const ringColors = [0x000000, 0x00ff00, 0x0000ff];
+    //const ringColors = [0xff4500, 0x32cd32, 0x1e90ff];
+    const ringColors = [0xff6347, 0x4682b4, 0x32cd32];
     var ringInnerRadius = cylinderRadius;
     var ringOuterRadius = ringInnerRadius + ringThickness;
 
@@ -515,9 +512,8 @@ function update() {
     rotateParametricSurfaces();
 }
 
-//function keyWDown() { g_carrinho.position.z -= g_carrinho.position.z > -30 ? cartSpeed * deltaTime : 0; }
 function keyOneDown() { 
-    // ring can only move in one direction at a time, and must invert direction if it reaches the limits
+    // rings can only move in one direction at a time, and must invert direction if they reach the limits
     if (ring1Group.position.y >= upperLimit) {
         ring1Group.position.y = upperLimit;
         ring1MovDir = -1;
@@ -530,7 +526,6 @@ function keyOneDown() {
 }
 
 function keyTwoDown() { 
-    // ring can only move in one direction at a time, and must invert direction if it reaches the limits
     if (ring2Group.position.y >= upperLimit) {
         ring2Group.position.y = upperLimit;
         ring2MovDir = -1;
@@ -543,7 +538,6 @@ function keyTwoDown() {
 }
 
 function keyThreeDown() { 
-    // ring can only move in one direction at a time, and must invert direction if it reaches the limits
     if (ring3Group.position.y >= upperLimit) {
         ring3Group.position.y = upperLimit;
         ring3MovDir = -1;
@@ -575,25 +569,44 @@ function keySDown() {
 
 function keyQDown() {
     // changes to MeshLambertMaterial
-    // TODO fix this
+    var i = 0;
+    for (let mesh of sceneItems.keys()) {
+        if (i = 0) console.log(mesh.material);
+        mesh.material = sceneItems.get(mesh).lambert;
+        if (i = 0) console.log(mesh.material);
+        i++;
+    }
     delete pressedKeys['Q'];
 }
 
 function keyWDown() {
     // changes to MeshPhongMaterial
-    // TODO fix this
+    for (let mesh of sceneItems.keys()) {
+        console.log(mesh.material);
+        mesh.material = sceneItems.get(mesh).phong;
+        console.log(mesh.material);
+    }
+    console.log(sceneItems);
     delete pressedKeys['W'];
 }
 
 function keyEDown() {
     // changes to MeshToonMaterial
-    // TODO fix this
+    for (let mesh of sceneItems.keys()) {
+        console.log(mesh.material);
+        mesh.material = sceneItems.get(mesh).toon;
+        console.log(mesh.material);
+    }
     delete pressedKeys['E'];
 }
 
 function keyRDown() {
     // changes to MeshNormalMaterial
-    // TODO fix this
+    for (let mesh of sceneItems.keys()) {
+        console.log(mesh.material);
+        mesh.material = sceneItems.get(mesh).normal;
+        console.log(mesh.material);
+    }
     delete pressedKeys['R'];
 }
 
