@@ -9,19 +9,19 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var renderer, scene, defaultCamera;
-var wireframe = false, items = [];
-var sceneItems = new Map();
-var main_cylinder;
-var camera1, camera2, camera3, camera4, camera5, camera6;
-var ring1Group, ring2Group, ring3Group;
-var ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
-var rings = [];
+let renderer, scene, defaultCamera, controls;
+let wireframe = false, items = [];
+let sceneItems = new Map();
+let camera1, camera2, camera3, camera4, camera5, camera6;
+let main_cylinder;
+let ring1Group, ring2Group, ring3Group;
+let ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
+let rings = [];
 const ringThickness = 25, ringHeight = 15;
 const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 25;
 var surfaces = [];
 var clock = new THREE.Clock(), deltaTime;
-const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128;
+const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 5;
 var pressedKeys = {};
 var directionalLight, ambientLight;
 var mobiusLightsGroup, spotlightsGroup;
@@ -100,6 +100,7 @@ function createObjectLight(object,group) {
     const light = new THREE.SpotLight(0xffffff, 100, 100, Math.PI/4);
     light.position.set(object.position.x, ringHeight, object.position.z);
     light.target = object;
+    object.add(light);
     // light.target.position.set(object.position.x, 300, object.position.z);
     group.add(light);
 }
@@ -285,7 +286,7 @@ function createObjects(radius, ringGroup) {
         object.receiveShadow = true;
         object.position.set(
             (radius + ringThickness/2) * Math.sin(angle * i),
-            ringHeight + 2.5 + 5,
+            ringHeight + 5,
             (radius + ringThickness/2) * Math.cos(angle * i)
         );
         ringGroup.add(object);
@@ -294,13 +295,11 @@ function createObjects(radius, ringGroup) {
     }
 }
 
-function rotateParametricSurfaces () {
-    // for (let surface of surfaces) {
-    //     surface.rotateY(Math.PI/rotationSpeed) * deltaTime;
-    // } 
+function rotateObjects () {
     surfaces.forEach(surface => { 
         surface.rotateX(Math.PI/rotationSpeed) * deltaTime;
-    })
+    });
+    main_cylinder.rotateY(Math.PI/cylinderRotSpeed) * deltaTime;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -510,8 +509,7 @@ function update() {
     for (const key in pressedKeys) {
         keyActions[key]();
     }
-    main_cylinder.rotation.y += 20 * Math.PI/rotationSpeed * deltaTime;
-    rotateParametricSurfaces();
+    rotateObjects();
 }
 
 function keyOneDown() { 
