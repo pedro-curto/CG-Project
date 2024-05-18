@@ -10,7 +10,7 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 /* GLOBAL VARIABLES */
 //////////////////////
 let renderer, scene, defaultCamera, controls;
-let wireframe = false, items = [];
+let wireframe = false;
 let sceneItems = new Map();
 let camera1, camera2, camera3, camera4, camera5, camera6;
 let main_cylinder;
@@ -18,10 +18,10 @@ let ring1Group, ring2Group, ring3Group;
 let ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
 let rings = [];
 const ringThickness = 25, ringHeight = 15;
-const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 25;
+const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 40;
 var surfaces = [], spotlights = [];
 var clock = new THREE.Clock(), deltaTime;
-const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 5;
+const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 3;
 var pressedKeys = {};
 var directionalLight, ambientLight;
 var mobiusLightsGroup;
@@ -52,7 +52,6 @@ function createScene() {
     createBase();
     createSkydome();
     createMobiusStrip();
-    console.log(items, items.size);
     console.log(sceneItems, sceneItems.size);
 }
 
@@ -110,21 +109,44 @@ function createObjectLight(object, group) {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
+function createMobiusMesh(geometry, color) {
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x4169E1,
+        // color: 0xff7700,
+        transparent: true,
+        opacity: 0.6,
+        shininess: 100,
+        specular: 0xffffff,
+        side: THREE.DoubleSide,
+        depthWrite: false // Importante para transparência
+    });
+    const lambertMaterial = new THREE.MeshLambertMaterial({ color: 0x4169E1, side: THREE.DoubleSide});
+    const toonMaterial = new THREE.MeshToonMaterial({ color: 0x4169E1, side: THREE.DoubleSide});
+    const normalMaterial = new THREE.MeshNormalMaterial({ 
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide});
+    var mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    sceneItems.set(mesh, {phong: material, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
+    return mesh;
+}
+
 function createMesh(geometry, color) {
-    var phongMaterial = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
-    var lambertMaterial = new THREE.MeshLambertMaterial({ color: color, wireframe: wireframe });
-    var toonMaterial = new THREE.MeshToonMaterial({ color: color, wireframe: wireframe });
-    var normalMaterial = new THREE.MeshNormalMaterial({ wireframe: wireframe });
+    const phongMaterial = new THREE.MeshPhongMaterial({ color: color, wireframe: wireframe });
+    const lambertMaterial = new THREE.MeshLambertMaterial({ color: color, wireframe: wireframe });
+    const toonMaterial = new THREE.MeshToonMaterial({ color: color, wireframe: wireframe });
+    const normalMaterial = new THREE.MeshNormalMaterial({ wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, phongMaterial);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    items.push(mesh);
     sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
     return mesh;
 }
 
 function createParamSurfaceMesh(geometry) {
-    var phongMaterial = new THREE.MeshPhongMaterial( { 
+    /*var phongMaterial = new THREE.MeshPhongMaterial( { 
         color: 0xff0000,
         transparent: true,
         opacity: 0.6,
@@ -132,7 +154,8 @@ function createParamSurfaceMesh(geometry) {
         specular: 0xffffff,
         side: THREE.DoubleSide,
         depthWrite: false
-    });
+    });*/
+    var phongMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var lambertMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var toonMaterial = new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var normalMaterial = new THREE.MeshNormalMaterial( { side: THREE.DoubleSide});
@@ -145,10 +168,9 @@ function createParamSurfaceMesh(geometry) {
 function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
     'use strict';
     // var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);   TODO: fix this
-    var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height);
+    var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 128);
     var mesh = createMesh(geometry, color);
     mesh.receiveShadow = true;
-    items.push(mesh);
     mesh.position.set(x, y, z);
     return mesh;
 }
@@ -307,6 +329,7 @@ function rotateObjects () {
         surface.rotateX(Math.PI/rotationSpeed) * deltaTime;
     });
     main_cylinder.rotateY(Math.PI/cylinderRotSpeed) * deltaTime;
+    mobiusLightsGroup.rotation.y += 10 * 2*Math.PI/rotationSpeed * deltaTime;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -348,26 +371,15 @@ function createMobiusStrip() {
     mobiusGeometry.setIndex(indices);
     mobiusGeometry.computeVertexNormals();
 
-    const material = new THREE.MeshPhongMaterial({
-        color: 0x4169E1,
-        // color: 0xff7700,
-        transparent: true,
-        opacity: 0.6,
-        shininess: 100,
-        specular: 0xffffff,
-        side: THREE.DoubleSide,
-        depthWrite: false // Importante para transparência
-    });
-    const mobius = new THREE.Mesh(mobiusGeometry, material);
+    const mobius = createMobiusMesh(mobiusGeometry, 0x4169E1);
     mobius.scale.multiplyScalar(25);
     mobius.rotateX(Math.PI/2);
 
     createMobiusLights();
     mobius_group.add(mobius);
     mobius_group.add(mobiusLightsGroup);
-    mobius_group.position.set(0,cylinderHeight + 20,0);
+    mobius_group.position.set(0,cylinderHeight + 30,0);
     scene.add(mobius_group);
-
 
     // helper function
     function create_points(u, t, target) {
@@ -440,7 +452,7 @@ function createRing(outerRadius, innerRadius, height, color) {
 
     const extrudeSettings = {
         steps: 1,
-        curveSegments: 50,
+        curveSegments: 64,
         depth: height,
         bevelEnabled: false
     };
@@ -510,7 +522,6 @@ function handleCollisions(){
 ////////////
 function update() {
     'use strict';
-    mobiusLightsGroup.rotation.y += 10 * 2*Math.PI/rotationSpeed * deltaTime;
     for (const key in pressedKeys) {
         keyActions[key]();
     }
