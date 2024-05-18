@@ -19,12 +19,12 @@ let ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
 let rings = [];
 const ringThickness = 25, ringHeight = 15;
 const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 25;
-var surfaces = [];
+var surfaces = [], spotlights = [];
 var clock = new THREE.Clock(), deltaTime;
 const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 5;
 var pressedKeys = {};
 var directionalLight, ambientLight;
-var mobiusLightsGroup, spotlightsGroup;
+var mobiusLightsGroup;
 var defaultMaterial = 2;
 var geometries, materials; // TODO do the materials still make sense?
 
@@ -96,11 +96,12 @@ function createLights() {
     scene.add(directionalLight);
 }
 
-function createObjectLight(object,group) {
+function createObjectLight(object, group) {
     const light = new THREE.SpotLight(0xffffff, 100, 100, Math.PI/4);
     light.position.set(object.position.x, ringHeight, object.position.z);
     light.target = object;
     object.add(light);
+    spotlights.push(light);
     // light.target.position.set(object.position.x, 300, object.position.z);
     group.add(light);
 }
@@ -153,6 +154,10 @@ function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
+//                 AUXILIAR FUNCTIONS FOR PARAMETRIC SURFACES                  //
+/////////////////////////////////////////////////////////////////////////////////
+
 function cilindroSemBases(u, t, target) { // 1
     const rho = 2.5;
     const height = 5;
@@ -164,10 +169,6 @@ function cilindroSemBases(u, t, target) { // 1
 
     target.set(x,y,z);
 }
-
-/////////////////////////////////////////////////////////////////////////////////
-//                  AUXILIAR FUNCTION FOR PARAMETRIC SURFACES                  //
-/////////////////////////////////////////////////////////////////////////////////
 
 function cilindroSemBasesNaoCircular(u, t, target) { // 2
     const rho = 2.5;
@@ -254,7 +255,7 @@ function hiperboloide(u, t, target) { // 8
     target.set(x,y,z);
 }
 
-function initializeArrays() {
+/*function initializeArrays() {
     geometries = [cilindroSemBases, cilindroSemBasesNaoCircular, cilindroSemBaseTorto, 
         cone, MeioConeMeioCilindro, coneTorto, planoTorto, hiperboloide];
     // TODO does this still make sense?
@@ -272,11 +273,17 @@ function initializeArrays() {
         new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide}),
         new THREE.MeshNormalMaterial( { side: THREE.DoubleSide}),
     ]
-}
+}*/
+
+////////////////////////////////////////////////////////////////////////////////
+//                        PARAMETRIC SURFACES CREATION                        //
+////////////////////////////////////////////////////////////////////////////////
 
 
 
 function createObjects(radius, ringGroup) {
+    geometries = [cilindroSemBases, cilindroSemBasesNaoCircular, cilindroSemBaseTorto, 
+        cone, MeioConeMeioCilindro, coneTorto, planoTorto, hiperboloide];
     const n_objects = 8;
     const angle = 2 * Math.PI / n_objects;
     for (let i = 0; i < n_objects; i++) {
@@ -409,13 +416,11 @@ function createBase() {
     ring1Group = new THREE.Group();
     ring2Group = new THREE.Group();
     ring3Group = new THREE.Group();
-    spotlightsGroup = new THREE.Group();
     createMainCylinder();
     createRings();
     scene.add(ring1Group);
     scene.add(ring2Group);
     scene.add(ring3Group);
-    scene.add(spotlightsGroup);
 }
 
 
@@ -562,8 +567,10 @@ function keyPDown() {
 }
 
 function keySDown() {
-    // enables/disables spotlights for all objects
-    spotlightsGroup.visible = !spotlightsGroup.visible;
+    // iterate through all surfaces and disable their associated lights
+    for (let light of spotlights) {
+        light.visible = !light.visible;
+    }
     delete pressedKeys['S'];
 }
 
@@ -629,7 +636,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
-    initializeArrays();
+    //initializeArrays();
     createScene();
     createCamera();
     createLights();
