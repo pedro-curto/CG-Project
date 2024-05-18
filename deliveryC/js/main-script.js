@@ -9,9 +9,10 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-var renderer, scene, defaultCamera, controls;
+var renderer, scene, defaultCamera;
 var wireframe = false, items = [];
 var sceneItems = new Map();
+var main_cylinder;
 var camera1, camera2, camera3, camera4, camera5, camera6;
 var ring1Group, ring2Group, ring3Group;
 var ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
@@ -95,12 +96,12 @@ function createLights() {
     scene.add(directionalLight);
 }
 
-function createObjectLight(object) {
+function createObjectLight(object,group) {
     const light = new THREE.SpotLight(0xffffff, 100, 100, Math.PI/4);
     light.position.set(object.position.x, ringHeight, object.position.z);
     light.target = object;
     // light.target.position.set(object.position.x, 300, object.position.z);
-    spotlightsGroup.add(light);
+    group.add(light);
 }
 
 ////////////////////////
@@ -284,12 +285,12 @@ function createObjects(radius, ringGroup) {
         object.receiveShadow = true;
         object.position.set(
             (radius + ringThickness/2) * Math.sin(angle * i),
-            ringHeight + 2.5,
+            ringHeight + 2.5 + 5,
             (radius + ringThickness/2) * Math.cos(angle * i)
         );
         ringGroup.add(object);
         surfaces.push(object);
-        createObjectLight(object);
+        createObjectLight(object, ringGroup);
     }
 }
 
@@ -309,7 +310,7 @@ function rotateParametricSurfaces () {
 function createMobiusStrip() {
     const mobius_group = new THREE.Group();
     const mobiusGeometry = new THREE.BufferGeometry();
-    const segments = 100;
+    const segments = 10;
     const vertices = [];
     const indices = [];
     const position = new THREE.Vector3();
@@ -422,7 +423,7 @@ function createBase() {
 function createMainCylinder() {
     'use strict';
     const color = 0x8a2be2;
-    const main_cylinder = createCylinderObject(0, cylinderHeight/2, 0, cylinderRadius, cylinderRadius, cylinderHeight, color);
+    main_cylinder = createCylinderObject(0, cylinderHeight/2, 0, cylinderRadius, cylinderRadius, cylinderHeight, color);
     scene.add(main_cylinder);
 }
 
@@ -505,10 +506,11 @@ function handleCollisions(){
 ////////////
 function update() {
     'use strict';
-    mobiusLightsGroup.rotation.y += 10* 2*Math.PI/rotationSpeed * deltaTime;
+    mobiusLightsGroup.rotation.y += 10 * 2*Math.PI/rotationSpeed * deltaTime;
     for (const key in pressedKeys) {
         keyActions[key]();
     }
+    main_cylinder.rotation.y += 20 * Math.PI/rotationSpeed * deltaTime;
     rotateParametricSurfaces();
 }
 
@@ -634,7 +636,7 @@ function init() {
     createCamera();
     createLights();
     
-    controls = new OrbitControls(defaultCamera, renderer.domElement);
+    new OrbitControls(defaultCamera, renderer.domElement);
 
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
