@@ -12,7 +12,7 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 let renderer, scene, defaultCamera, controls;
 let wireframe = false;
 let sceneItems = new Map();
-let camera1, camera2, camera3, camera4, camera5, camera6;
+let camera1;
 let main_cylinder;
 let ring1Group, ring2Group, ring3Group;
 let ring1MovDir = 1, ring2MovDir = 1, ring3MovDir = 1;
@@ -21,12 +21,11 @@ const ringThickness = 25, ringHeight = 15;
 const lowerLimit = 0, upperLimit = 100-ringHeight, ascensionSpeed = 40;
 var surfaces = [], spotlights = [];
 var clock = new THREE.Clock(), deltaTime;
-const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 3;
+const cylinderHeight = 100, cylinderRadius = 20, rotationSpeed = 128, cylinderRotSpeed = 5;
 var pressedKeys = {};
 var directionalLight, ambientLight;
 var mobiusLightsGroup;
-var defaultMaterial = 2;
-var geometries, materials; // TODO do the materials still make sense?
+var geometries;
 
 const keyActions = {
     '1': keyOneDown,
@@ -38,7 +37,8 @@ const keyActions = {
     'Q': keyQDown,
     'W': keyWDown,
     'E': keyEDown,
-    'R': keyRDown
+    'R': keyRDown,
+    'T': keyTDown
 };
 
 /////////////////////
@@ -52,7 +52,6 @@ function createScene() {
     createBase();
     createSkydome();
     createMobiusStrip();
-    console.log(sceneItems, sceneItems.size);
 }
 
 //////////////////////
@@ -62,7 +61,7 @@ function createCamera() {
     'use strict';
     const widthRatio = window.innerWidth / 24;
     const heightRatio = window.innerHeight / 24;
-    const aspectRatio = window.innerWidth / window.innerHeight;
+    const aspectRatio = widthRatio / heightRatio;
     camera1 = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 10000);
     setCamera(camera1, 200, 50, 200, 0, 0, 0);
 
@@ -101,7 +100,7 @@ function createObjectLight(object, group) {
     light.target = object;
     object.add(light);
     spotlights.push(light);
-    // light.target.position.set(object.position.x, 300, object.position.z);
+    // light.target.position.set(object.position.x, 300, object.position.z); TODO this breaks the objects; remove?
     group.add(light);
 }
 
@@ -126,10 +125,12 @@ function createMobiusMesh(geometry, color) {
         transparent: true,
         opacity: 0.6,
         side: THREE.DoubleSide});
+    const basicMaterial = new THREE.MeshBasicMaterial({ color: 0x4169E1, side: THREE.DoubleSide});
     var mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    sceneItems.set(mesh, {phong: material, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
+    sceneItems.set(mesh, {phong: material, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial,
+        basic: basicMaterial});
     return mesh;
 }
 
@@ -138,10 +139,12 @@ function createMesh(geometry, color) {
     const lambertMaterial = new THREE.MeshLambertMaterial({ color: color, wireframe: wireframe });
     const toonMaterial = new THREE.MeshToonMaterial({ color: color, wireframe: wireframe });
     const normalMaterial = new THREE.MeshNormalMaterial({ wireframe: wireframe });
+    const basicMaterial = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, phongMaterial);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
+    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial,
+        basic: basicMaterial});
     return mesh;
 }
 
@@ -159,15 +162,16 @@ function createParamSurfaceMesh(geometry) {
     var lambertMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var toonMaterial = new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var normalMaterial = new THREE.MeshNormalMaterial( { side: THREE.DoubleSide});
+    var basicMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var mesh = new THREE.Mesh(geometry, toonMaterial);
-    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial});
+    sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial,
+        basic: basicMaterial});
     return mesh;
 }
 
 
 function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
     'use strict';
-    // var mesh = createMesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height), color);   TODO: fix this
     var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 128);
     var mesh = createMesh(geometry, color);
     mesh.receiveShadow = true;
@@ -277,26 +281,6 @@ function hiperboloide(u, t, target) { // 8
     target.set(x,y,z);
 }
 
-/*function initializeArrays() {
-    geometries = [cilindroSemBases, cilindroSemBasesNaoCircular, cilindroSemBaseTorto, 
-        cone, MeioConeMeioCilindro, coneTorto, planoTorto, hiperboloide];
-    // TODO does this still make sense?
-    materials = [
-        new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide}),
-        new THREE.MeshPhongMaterial( { 
-            color: 0xff0000,
-            transparent: true,
-            opacity: 0.6,
-            shininess: 100,
-            specular: 0xffffff,
-            side: THREE.DoubleSide,
-            depthWrite: false
-        }),
-        new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide}),
-        new THREE.MeshNormalMaterial( { side: THREE.DoubleSide}),
-    ]
-}*/
-
 ////////////////////////////////////////////////////////////////////////////////
 //                        PARAMETRIC SURFACES CREATION                        //
 ////////////////////////////////////////////////////////////////////////////////
@@ -315,7 +299,7 @@ function createObjects(radius, ringGroup) {
         object.receiveShadow = true;
         object.position.set(
             (radius + ringThickness/2) * Math.sin(angle * i),
-            ringHeight + 5,
+            ringHeight + 10,
             (radius + ringThickness/2) * Math.cos(angle * i)
         );
         ringGroup.add(object);
@@ -600,9 +584,7 @@ function keyQDown() {
 function keyWDown() {
     // changes to MeshPhongMaterial
     for (let mesh of sceneItems.keys()) {
-        console.log(mesh.material);
         mesh.material = sceneItems.get(mesh).phong;
-        console.log(mesh.material);
     }
     console.log(sceneItems);
     delete pressedKeys['W'];
@@ -611,9 +593,7 @@ function keyWDown() {
 function keyEDown() {
     // changes to MeshToonMaterial
     for (let mesh of sceneItems.keys()) {
-        console.log(mesh.material);
         mesh.material = sceneItems.get(mesh).toon;
-        console.log(mesh.material);
     }
     delete pressedKeys['E'];
 }
@@ -621,11 +601,16 @@ function keyEDown() {
 function keyRDown() {
     // changes to MeshNormalMaterial
     for (let mesh of sceneItems.keys()) {
-        console.log(mesh.material);
         mesh.material = sceneItems.get(mesh).normal;
-        console.log(mesh.material);
     }
     delete pressedKeys['R'];
+}
+
+function keyTDown() {
+    // changes to MeshBasicMaterial
+    for (let mesh of sceneItems.keys()) {
+        mesh.material = sceneItems.get(mesh).basic;
+    }
 }
 
 /////////////
@@ -646,8 +631,9 @@ function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
-    //initializeArrays();
+    document.body.appendChild(VRButton.createButton(renderer));
     createScene();
     createCamera();
     createLights();
@@ -667,7 +653,7 @@ function animate() {
     deltaTime = clock.getDelta();
     update();
     render();
-    requestAnimationFrame(animate);
+    renderer.setAnimationLoop(animate);
 }
 
 ////////////////////////////
