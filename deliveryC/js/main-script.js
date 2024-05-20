@@ -9,7 +9,7 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-let renderer, scene, defaultCamera, controls;
+let renderer, scene, defaultCamera, stereoCamera, controls;
 let wireframe = false;
 let sceneItems = new Map();
 let camera1;
@@ -63,6 +63,7 @@ function createCamera() {
     const heightRatio = window.innerHeight / 24;
     const aspectRatio = widthRatio / heightRatio;
     camera1 = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 10000);
+    stereoCamera = new THREE.StereoCamera();
     setCamera(camera1, 200, 50, 200, 0, 0, 0);
 
     defaultCamera = camera1; // set default camera
