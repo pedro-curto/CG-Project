@@ -291,6 +291,7 @@ function hiperboloide(u, t, target) { // 8
 function createObjects(radius, ringGroup) {
     geometries = [cilindroSemBases, cilindroSemBasesNaoCircular, cilindroSemBaseTorto, 
         cone, MeioConeMeioCilindro, coneTorto, planoTorto, hiperboloide];
+    let positions = Array.from(Array(8).keys());
     const n_objects = 8;
     const angle = 2 * Math.PI / n_objects;
     for (let i = 0; i < n_objects; i++) {
@@ -298,10 +299,14 @@ function createObjects(radius, ringGroup) {
         const object = createParamSurfaceMesh(geometry);
         object.castShadow = true;
         object.receiveShadow = true;
+
+        const pos_index = Math.floor(Math.random() * positions.length);
+        const pos = positions.splice(pos_index, 1).at(0);
+
         object.position.set(
-            (radius + ringThickness/2) * Math.sin(angle * i),
+            (radius + ringThickness/2) * Math.sin(angle * pos),
             ringHeight + 10,
-            (radius + ringThickness/2) * Math.cos(angle * i)
+            (radius + ringThickness/2) * Math.cos(angle * pos)
         );
         ringGroup.add(object);
         surfaces.push(object);
