@@ -10,6 +10,7 @@ import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometri
 /* GLOBAL VARIABLES */
 //////////////////////
 let renderer, scene, defaultCamera, stereoCamera, controls;
+let isRing1Moving = true, isRing2Moving = true, isRing3Moving = true;
 let wireframe = false;
 let sceneItems = new Map();
 let camera1;
@@ -314,14 +315,6 @@ function createObjects(radius, ringGroup) {
     }
 }
 
-function rotateObjects () {
-    surfaces.forEach(surface => { 
-        surface.rotateX(Math.PI/rotationSpeed) * deltaTime;
-    });
-    main_cylinder.rotateY(Math.PI/cylinderRotSpeed) * deltaTime;
-    mobiusLightsGroup.rotation.y += 10 * 2*Math.PI/rotationSpeed * deltaTime;
-}
-
 ////////////////////////////////////////////////////////////////////////
 /*                   CREATE MOBIUS STRIP AND LIGHTS                   */
 ////////////////////////////////////////////////////////////////////////
@@ -516,43 +509,51 @@ function update() {
         keyActions[key]();
     }
     rotateObjects();
+    moveRings();
+}
+
+function rotateObjects () {
+    surfaces.forEach(surface => { 
+        surface.rotateX(Math.PI/rotationSpeed) * deltaTime;
+    });
+    main_cylinder.rotateY(Math.PI/cylinderRotSpeed) * deltaTime;
+    mobiusLightsGroup.rotation.y += 10 * 2*Math.PI/rotationSpeed * deltaTime;
+}
+
+
+function moveRing(ringGroup, ringMovDir) {
+    if (ringGroup.position.y >= upperLimit) {
+        ringGroup.position.y = upperLimit;
+        ringMovDir = -1;
+    }
+    if (ringGroup.position.y <= lowerLimit && ringMovDir == -1) {
+        ringGroup.position.y = lowerLimit;
+        ringMovDir = 1;
+    }
+    ringGroup.position.y += ringMovDir * ascensionSpeed * deltaTime;
+    return ringMovDir;
+} 
+
+
+function moveRings() {
+    if (isRing1Moving) ring1MovDir = moveRing(ring1Group, ring1MovDir);
+    if (isRing2Moving) ring2MovDir = moveRing(ring2Group, ring2MovDir);
+    if (isRing3Moving) ring3MovDir = moveRing(ring3Group, ring3MovDir);
 }
 
 function keyOneDown() { 
-    // rings can only move in one direction at a time, and must invert direction if they reach the limits
-    if (ring1Group.position.y >= upperLimit) {
-        ring1Group.position.y = upperLimit;
-        ring1MovDir = -1;
-    }
-    if (ring1Group.position.y <= lowerLimit && ring1MovDir == -1) {
-        ring1Group.position.y = lowerLimit;
-        ring1MovDir = 1;
-    }
-    ring1Group.position.y += ring1MovDir * ascensionSpeed * deltaTime;
+    isRing1Moving = !isRing1Moving;
+    delete pressedKeys['1'];
 }
 
 function keyTwoDown() { 
-    if (ring2Group.position.y >= upperLimit) {
-        ring2Group.position.y = upperLimit;
-        ring2MovDir = -1;
-    }
-    if (ring2Group.position.y <= lowerLimit) {
-        ring2Group.position.y = lowerLimit;
-        ring2MovDir = 1;
-    }
-    ring2Group.position.y += ring2MovDir * ascensionSpeed * deltaTime;
+    isRing2Moving = !isRing2Moving;
+    delete pressedKeys['2'];
 }
 
 function keyThreeDown() { 
-    if (ring3Group.position.y >= upperLimit) {
-        ring3Group.position.y = upperLimit;
-        ring3MovDir = -1;
-    }
-    if (ring3Group.position.y <= lowerLimit) {
-        ring3Group.position.y = lowerLimit;
-        ring3MovDir = 1;
-    }
-    ring3Group.position.y += ring3MovDir * ascensionSpeed * deltaTime;
+    isRing3Moving = !isRing3Moving;
+    delete pressedKeys['3'];
 }
 
 function keyDDown() {
