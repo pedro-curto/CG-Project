@@ -447,7 +447,6 @@ function createRing(outerRadius, innerRadius, height, color) {
 
 function createRings() {
     const numRings = 3;
-    //const ringColors = [0xff4500, 0x32cd32, 0x1e90ff];
     const ringColors = [0xff6347, 0x4682b4, 0x32cd32];
     var ringInnerRadius = cylinderRadius;
     var ringOuterRadius = ringInnerRadius + ringThickness;
@@ -457,10 +456,12 @@ function createRings() {
     for (let i = 0; i < numRings; i++) {
         const ringColor = ringColors[i];
         const ring = createRing(ringOuterRadius, ringInnerRadius, ringHeight, ringColor);
+        const randY = Math.random() * (upperLimit - lowerLimit) + lowerLimit;
         ring.position.set(0, ringHeight, 0);
         rings.push(ring);
         createObjects(ringInnerRadius, ringGroups[i]);
         ringGroups[i].add(ring);
+        ringGroups[i].position.y = randY;
         ringInnerRadius = ringOuterRadius;
         ringOuterRadius = ringInnerRadius + ringThickness;
     }
