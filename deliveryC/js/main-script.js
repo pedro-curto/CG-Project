@@ -1,15 +1,11 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
-import * as Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
-import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometries.js';
 
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
-let renderer, scene, defaultCamera, stereoCamera, controls;
+let renderer, scene, defaultCamera, stereoCamera;
 let isRing1Moving = true, isRing2Moving = true, isRing3Moving = true;
 let wireframe = false;
 let sceneItems = new Map();
@@ -65,9 +61,8 @@ function createCamera() {
     const aspectRatio = widthRatio / heightRatio;
     camera1 = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 10000);
     stereoCamera = new THREE.StereoCamera();
-    setCamera(camera1, 200, 50, 200, 0, 0, 0);
-
-    defaultCamera = camera1; // set default camera
+    setCamera(camera1, -150, 150, -150, 0, 0, 0);
+    defaultCamera = camera1 // set default camera
 }
 
 function setCamera(camera, x, y, z, xLook, yLook, zLook) {
@@ -85,14 +80,7 @@ function createLights() {
     scene.add(ambientLight);
 
     directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.shadow.mapSize.width = 5120 // default
-    directionalLight.shadow.mapSize.height = 5120 // default
     directionalLight.position.set(200, 200, 200);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.camera.top = -100 // default
-    directionalLight.shadow.camera.right = 100 // default
-    directionalLight.shadow.camera.left = -100 // default
-    directionalLight.shadow.camera.bottom = 100 // default
     scene.add(directionalLight);
 }
 
@@ -102,7 +90,6 @@ function createObjectLight(object, group) {
     light.target = object;
     object.add(light);
     spotlights.push(light);
-    // light.target.position.set(object.position.x, 300, object.position.z); TODO this breaks the objects; remove?
     group.add(light);
 }
 
@@ -129,8 +116,6 @@ function createMobiusMesh(geometry, color) {
         side: THREE.DoubleSide});
     const basicMaterial = new THREE.MeshBasicMaterial({ color: 0x4169E1, side: THREE.DoubleSide});
     var mesh = new THREE.Mesh(geometry, material);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
     sceneItems.set(mesh, {phong: material, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial,
         basic: basicMaterial});
     return mesh;
@@ -143,23 +128,12 @@ function createMesh(geometry, color) {
     const normalMaterial = new THREE.MeshNormalMaterial({ wireframe: wireframe });
     const basicMaterial = new THREE.MeshBasicMaterial({ color: color, wireframe: wireframe });
     var mesh = new THREE.Mesh(geometry, phongMaterial);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
     sceneItems.set(mesh, {phong: phongMaterial, lambert: lambertMaterial, toon: toonMaterial, normal: normalMaterial,
         basic: basicMaterial});
     return mesh;
 }
 
 function createParamSurfaceMesh(geometry) {
-    /*var phongMaterial = new THREE.MeshPhongMaterial( { 
-        color: 0xff0000,
-        transparent: true,
-        opacity: 0.6,
-        shininess: 100,
-        specular: 0xffffff,
-        side: THREE.DoubleSide,
-        depthWrite: false
-    });*/
     var phongMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var lambertMaterial = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
     var toonMaterial = new THREE.MeshToonMaterial( { color: 0x00ff00, side: THREE.DoubleSide});
@@ -176,7 +150,6 @@ function createCylinderObject(x, y, z, radiusTop, radiusBottom, height, color) {
     'use strict';
     var geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 128);
     var mesh = createMesh(geometry, color);
-    mesh.receiveShadow = true;
     mesh.position.set(x, y, z);
     return mesh;
 }
@@ -298,8 +271,6 @@ function createObjects(radius, ringGroup) {
     for (let i = 0; i < n_objects; i++) {
         const geometry = new ParametricGeometry(geometries[i], 100, 100);
         const object = createParamSurfaceMesh(geometry);
-        object.castShadow = true;
-        object.receiveShadow = true;
 
         const pos_index = Math.floor(Math.random() * positions.length);
         const pos = positions.splice(pos_index, 1).at(0);
@@ -638,15 +609,13 @@ function init() {
         antialias: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
     document.body.appendChild(VRButton.createButton(renderer));
     createScene();
     createCamera();
     createLights();
-    
-    new OrbitControls(defaultCamera, renderer.domElement);
 
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
