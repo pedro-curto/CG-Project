@@ -23,6 +23,8 @@ var pressedKeys = {};
 var directionalLight, ambientLight;
 var mobiusLightsGroup;
 var geometries;
+let originalCameraPosition, originalCameraLookAt, originalScenePosition;
+
 
 const keyActions = {
     '1': keyOneDown,
@@ -61,7 +63,7 @@ function createCamera() {
     const aspectRatio = widthRatio / heightRatio;
     camera1 = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 10000);
     stereoCamera = new THREE.StereoCamera();
-    setCamera(camera1, -150, 150, -150, 0, 0, 0);
+    setCamera(camera1, -150, 150-100, -150-200, 0, -100, -200);
     defaultCamera = camera1 // set default camera
 }
 
@@ -527,9 +529,7 @@ function keyQDown() {
     // changes to MeshLambertMaterial
     var i = 0;
     for (let mesh of sceneItems.keys()) {
-        if (i = 0) console.log(mesh.material);
         mesh.material = sceneItems.get(mesh).lambert;
-        if (i = 0) console.log(mesh.material);
         i++;
     }
     delete pressedKeys['Q'];
@@ -540,7 +540,6 @@ function keyWDown() {
     for (let mesh of sceneItems.keys()) {
         mesh.material = sceneItems.get(mesh).phong;
     }
-    console.log(sceneItems);
     delete pressedKeys['W'];
 }
 
@@ -591,9 +590,12 @@ function init() {
     createScene();
     createCamera();
     createLights();
+    scene.position.set(0,-100,-200);
 
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
+    renderer.xr.addEventListener('sessionstart', onSessionStart);
+    renderer.xr.addEventListener('sessionend', onSessionEnd);
     window.addEventListener("resize", onResize);
 }
 
@@ -643,3 +645,26 @@ function onKeyUp(e) {
 
 init();
 animate();
+
+function onSessionStart() {
+    // Store the original states
+    originalCameraPosition = camera1.position.clone();
+    originalCameraQuaternion = camera1.quaternion.clone();
+    originalScenePosition = scene.position.clone();
+
+    // Move the scene to the desired position for VR mode
+    scene.position.set(0, -100, -200);
+}
+
+function onSessionEnd() {
+    // Restore the original states
+    camera1.position.copy(originalCameraPosition);
+    camera1.quaternion.copy(originalCameraQuaternion);
+    scene.position.copy(originalScenePosition);
+
+    // Update the camera's projection matrix
+    camera1.updateProjectionMatrix();
+
+    // Handle window resize to ensure everything is properly sized
+    onResize();
+}
